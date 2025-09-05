@@ -626,3 +626,71 @@ def download_pdf_report(request):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
     return response
+
+def download_excel_report(request):
+    filter_type = request.GET.get('filter_type', 'daily')
+    order_items = get_filtered_sales(filter_type)
+    # Logic to fetch filtered data
+    order_items_list = list(order_items.values('order__order_date', 'id', 'order__delivery_address__name', 'status', 'price', 'unit_price', 'quantity'))
+
+    df = pd.DataFrame(order_items_list)
+    
+    for col in df.select_dtypes(include=['datetime64[ns, UTC]', 'datetime64[ns]']):
+        df[col] = df[col].dt.tz_localize(None) 
+    
+    if 'datetime_column' in df.columns:
+        df['datetime_column'] = df['datetime_column'].dt.tz_localize(None)
+    
+    response = HttpResponse(content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.xlsx"'
+    
+    df.to_excel(response, index=False)
+    return response
+
+
+def get_orders_data(request):
+    time_range = request.GET.get('time_range', 'yearly')
+
+    try:
+        if time_range == 'daily':
+            # Group by day for daily data
+            start_date = now() - timedelta(days=1)
+            orders = Orders.objects.filter(order_date__gte=start_date).annotate(
+                date=TruncDay('order_date')
+            ).values('date').annotate(total=Sum('total')).order_by('date')
+
+        elif time_range == 'weekly':
+            start_date = now() - timedelta(weeks=1)
+            print('week = ',start_date)
+            orders = Orders.objects.filter(order_date__gte=start_date).annotate(
+                date=TruncDay('order_date')
+            ).values('date').annotate(total=Sum('total')).order_by('date')
+            
+            
+        elif time_range == 'monthly':
+            start_date = now() - timedelta(days=30)
+            print('monthly',start_date)
+            orders = Orders.objects.filter(order_date__gte=start_date).annotate(
+                date=TruncWeek('order_date')
+            ).values('date').annotate(total=Sum('total')).order_by('date')
+            
+
+        elif time_range == 'yearly':
+            start_date = now() - timedelta(days=365)
+            print('yearly',start_date)
+            orders = Orders.objects.filter(order_date__gte=start_date).annotate(
+                date=TruncMonth('order_date')
+            ).values('date').annotate(total=Sum('total')).order_by('date')
+            
+
+        
+        data = {
+            'labels': [order.get('date').strftime('%Y-%m-%d') for order in orders],
+            'totals': [order['total'] for order in orders]
+        }
+
+        return JsonResponse(data)
+
+    except Exception as e:
+        # Return an error response in case something goes wrong
+        return JsonResponse({'error': str(e)}, status=500)
