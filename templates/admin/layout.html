@@ -10,9 +10,9 @@
         content="admin, estimates, bootstrap, business, corporate, creative, management, minimal, modern,  html5, responsive">
     <meta name="author" content="Dreamguys - Bootstrap Admin Template">
     <meta name="robots" content="noindex, nofollow">
-    <title>PhonoPedia Admin |{% block title %}Home {% endblock %}</title>
+    <title>Lapcon Admin |{% block title %}Home {% endblock %}</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/logo-small.png' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'image/logolapcon.png' %}">
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
 
@@ -60,10 +60,10 @@
 
             <div class="header-left active">
                 <a href="{% url 'admin_panel' %}" class="logo">
-                    <img src="{% static 'images/logo.png' %}" alt="">
+                    <img src="{% static 'image/logolapcon.png' %}" alt="">
                 </a>
                 <a href="{% url 'admin_panel' %}" class="logo-small">
-                    <img src="{% static 'images/logo.png' %}" alt="">
+                    <img src="{% static 'image/logolapcon.png' %}" alt="">
                 </a>
                 <a id="toggle_btn" href="javascript:void(0);">
                 </a>
@@ -106,7 +106,7 @@
                             <span class="notification-title">Notifications</span>
                             <a href="javascript:void(0)" class="clear-noti"> Clear All </a>
                         </div>
-                        <div class="noti-content">
+                        <!-- <div class="noti-content">
                             <ul class="notification-list">
                                 <li class="notification-message">
                                     <a href="activities.html">
@@ -125,7 +125,7 @@
                                     </a>
                                 </li>
                             </ul>
-                        </div>
+                        </div> -->
                         <div class="topnav-dropdown-footer">
                             <a href="activities.html">View all Notifications</a>
                         </div>
@@ -134,7 +134,7 @@
 
                 <li class="nav-item dropdown has-arrow main-drop">
                     <a href="javascript:void(0);" class="dropdown-toggle nav-link userset" data-bs-toggle="dropdown">
-                        <span class="user-img"><img src="{% static 'images/logo-small.png' %}" alt="">
+                        <span class="user-img"><img src="{% static 'images/logolapcon.png' %}" alt="">
                             <span class="status online"></span></span>
                     </a>
                     <div class="dropdown-menu menu-drop-user">
@@ -152,7 +152,7 @@
                             <!-- <a class="dropdown-item" href="generalsettings.html"><i class="me-2"
                                     data-feather="settings"></i>Settings</a> -->
                             <hr class="m-0">
-                            <a class="dropdown-item logout pb-0" href=""><img
+                            <a class="dropdown-item logout pb-0" href="{% url 'signout' %}"><img
                                     src="{% static 'img_admin/icons/log-out.svg' %}" class="me-2" alt="img">Logout</a>
                         </div>
                     </div>
@@ -166,7 +166,7 @@
                 <div class="dropdown-menu dropdown-menu-right">
                     <a class="dropdown-item" href="profile.html">My Profile</a>
                     <a class="dropdown-item" href="generalsettings.html">Settings</a>
-                    <a class="dropdown-item" href="">Logout</a>
+                    <a class="dropdown-item" href="{% url 'signout' %}">Logout</a>
                 </div>
             </div>
 
@@ -184,18 +184,18 @@
                         <li class="submenu">
                             <a href="javascript:void(0);"><img src="{% static 'img_admin/icons/product.svg' %}" alt="img"><span>Product</span> <span class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="">Product List</a></li>
-                                <li><a href="">Add Product</a></li>
-                                <li><a href="">Category List</a></li>
-                                <li><a href="">Add Category</a></li>
-                                <li><a href="">Brand List</a></li>
-                                <li><a href="">Add Brand</a></li>
+                                <li><a href="{% url 'admin_productlist' %}">Product List</a></li>
+                                <li><a href="{% url 'add_product' %}">Add Product</a></li>
+                                <li><a href="{% url 'category_list' %}">Category List</a></li>
+                                <li><a href="{% url 'add_category' %}">Add Category</a></li>
+                                <li><a href="{% url 'brand_list' %}">Brand List</a></li>
+                                <li><a href="{% url 'add_brand' %}">Add Brand</a></li>
                             </ul>
                         </li>
                         <li class="submenu">
                             <a href="javascript:void(0);"><img src="{% static 'img_admin/icons/sales1.svg' %}" alt="img"><span> Sales</span> <span class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="">Sales report</a></li>
+                                <li><a href="{% url 'sales_report' %}">Sales report</a></li>
                                 <!-- <li><a href="pos.html">POS</a></li>
                                 <li><a href="pos.html">New Sales</a></li>
                                 <li><a href="salesreturnlists.html">Sales Return List</a></li>
@@ -207,7 +207,7 @@
                                     alt="img"><span>
                                     Orders</span> <span class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="">Orders List</a></li>
+                                <li><a href="{% url 'view_orders_admin' %}">Orders List</a></li>
                                 <!-- <li><a href="addpurchase.html">Add Purchase</a></li>
                                 <li><a href="importpurchase.html">Import Purchase</a></li> -->
                             </ul>
@@ -241,7 +241,7 @@
                                 <li><a href="importtransfer.html">Import Transfer </a></li>
                             </ul>
                         </li> -->
-                        <li class="submenu">
+                        <!--  <li class="submenu">
                             <a href="javascript:void(0);"><img src="{% static 'img_admin/icons/return1.svg' %}"
                                     alt="img"><span>
                                     Return</span> <span class="menu-arrow"></span></a>
@@ -251,7 +251,7 @@
                                 <li><a href="purchasereturnlist.html">Purchase Return List</a></li>
                                 <li><a href="createpurchasereturn.html">Add Purchase Return </a></li>
                             </ul>
-                        </li>
+                        </li> -->
                         <!-- <li class="submenu">
                             <a href="javascript:void(0);"><img src="{% static 'img_admin/icons/users1.svg' %}"
                                     alt="img"><span>
@@ -388,8 +388,8 @@
                                     alt="img"><span>
                                     Users</span> <span class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="">New User </a></li>
-                                <li><a href="">Users List</a></li>
+                                <li><a href="{% url 'add_user' %}">New User </a></li>
+                                <li><a href="{% url 'view_users' %}">Users List</a></li>
                             </ul>
                         </li>
                         <!-- <li class="submenu">

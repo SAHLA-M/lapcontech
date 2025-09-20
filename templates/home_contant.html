@@ -1,0 +1,466 @@
+{% load static %}
+
+<!-- second nav -->
+{% block second_nav %}
+{% include 'second_nav.html' %}
+{% endblock second_nav %}
+
+
+{% block banner %}
+{% include 'banner_layout.html'%}
+{% endblock banner %}
+
+<!--  for persons Section-->
+
+<section class="py-5">
+   <div class="container ">
+       <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4">
+           <div class="col mb-5">
+               <div class="card rounded-4">
+                   <img src="{% static 'images/forstudents.png' %}" class="card-img rounded-4" alt="...">
+               </div> 
+           </div>     
+           <div class="col mb-5">
+                   <div class="card rounded-4">
+                       <img src="{% static 'images/forgaming.png' %}" class="card-img rounded-4" alt="...">
+                   </div>   
+           </div>
+           <div class="col mb-5">
+               <div class="card rounded-4">
+                   <img src="{% static 'images/forprofessionals.png' %}" class="card-img rounded-4" alt="...">
+               </div>   
+          </div>
+          <div class="col mb-5">
+               <div class="card  rounded-4">
+                   <img src="{% static 'images/fordevelopers.png' %}" class="card-img rounded-4" alt="...">
+               </div>   
+          </div> 
+</section> 
+
+<!-- category-->
+<section class="py-2">
+   <div class="container ">
+       <!-- Section Title -->
+       <div class="d-flex justify-content-between align-items-center">
+           <h3 class="fw-bold">Popular Categories</h3>
+           <a href="#" class="view-more-btn">View More</a>
+       </div>
+   
+       <!-- Categories Grid -->
+       <div class="row mt-3">
+           <div class="col-md-3 col-sm-6 mb-3">
+               <div class="category-card">
+                   <img src="{% static 'images/computing.png' %}" alt="Computing">
+                   <h5 class="mt-2 fw-bold">COMPUTING</h5>
+               </div>
+           </div>
+           <div class="col-md-3 col-sm-6 mb-3">
+               <div class="category-card">
+                   <img src="{% static 'images/comp asserios.png' %}" alt="Computer Accessories">
+                   <h5 class="mt-2 fw-bold">COMPUTER ACCESSORIES</h5>
+               </div>
+           </div>
+           <div class="col-md-3 col-sm-6 mb-3">
+               <div class="category-card">
+                   <img src="{% static 'images/smartphones.png' %}" alt="Smart Phone & Tablets">
+                   <h5 class="mt-2 fw-bold">SMART PHONE & TABLETS</h5>
+               </div>
+           </div>
+           <div class="col-md-3 col-sm-6 mb-3">
+               <div class="category-card">
+                   <img src="{% static 'images/cctv.png' %}" alt="CCTV & Control System">
+                   <h5 class="mt-2 fw-bold">CCTV & CONTROL SYSTEM</h5>
+               </div>
+           </div>
+       </div>
+   </div>
+</section>
+
+<!-- Section products-->
+<section>
+  <div class="small-container ">
+
+    {% if user.id and  recently_viewed_variants  %}
+      <h2 class="title mb-4">Recently Viewed</h2>
+    <div class="row">
+      {% for variant in recently_viewed_variants %}
+      <div class="col-4 mb-4">
+        {% if variant %}
+        
+        <div class="product-card"  style="cursor: pointer;">
+          
+
+          <!-- Discount badge -->
+          {% if variant.product.id in offerd_product_ides or variant.product.brand.id in offerd_brand_ides %}
+            <span class="discount-badge">
+              {% if variant.product.id in offerd_product_ides %}
+                {% for p_offer in p_offers %}
+                  {% if p_offer.product.id == variant.product.id %}
+                    {% if variant.product.brand.id in offerd_brand_ides %}
+                      {% for b_offer in b_offers %}
+                        {% if b_offer.brand.id == variant.product.brand.id %}
+                          {% if b_offer.percentage > p_offer.percentage %}
+                            -{{b_offer.percentage}}%
+                          {% else %}
+                            -{{p_offer.percentage}}%
+                          {% endif %}
+                        {% endif %}
+                      {% endfor %}
+                    {% else %}
+                      -{{p_offer.percentage}}%
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              {% elif variant.product.brand.id in offerd_brand_ides %}
+                {% for b_offer in b_offers %}
+                  {% if b_offer.brand.id == variant.product.brand.id %}
+                    -{{b_offer.percentage}}%
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </span>
+          {% endif %}
+
+          <!-- Product image -->
+          <img src="{{variant.image.url}}" class="product-img" alt="{{variant.product.name}}">
+
+          <!-- Hover popup -->
+           <a href="{% url 'variant_details' variant.id %}">
+          <div class="popup-overlay"></a>
+            <div class="add-cart">
+              <button class="btn btn-blue add-to-cart-btn popup-btn" data-variant-id="{{variant.id}}">Add Cart</button>
+            </div>
+            <div class="wish_cart">
+              <a href="{% url 'variant_details' variant.id %}">
+                    <button class="view"><i class="fas fa-eye"></i></button></a>
+                    <button class="wishlist add-to-wishlist-btn" data-variant-id="{{ variant.id }}"><i class="fas fa-heart"></i></button>
+                </div>
+          </div>
+
+          <!-- Product details -->
+          <p class="product-title">{{variant.product.name}}</p>
+          <p class="product-category">Laptops</p>
+          {% if variant.product.id in offerd_product_ides or variant.product.brand.id in offerd_brand_ides %}
+            <p class="product-price">
+              ₹{{variant.price|floatformat:0}}
+              <span class="old-price">₹{{variant.price}}</span>
+            </p>
+          {% else %}
+            <p class="product-price">₹{{variant.price}}</p>
+          {% endif %}
+
+          <!-- Stock info -->
+          {% if not variant.is_active or not variant.product.is_active %}
+            <p style="color: burlywood;">Unavailable</p>
+          {% elif variant.quantity > 0 %}
+            <p style="color: chartreuse;">In stock {{ variant.quantity }} pcs</p>
+          {% else %}
+            <p style="color: red;">Out of stock</p>
+          {% endif %}
+
+          <!-- Rating -->
+          <div class="rating">
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star-o"></i>
+          </div>
+
+        </div>
+        
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+<br>
+
+    <!-- Latest Products Section -->
+<h2 class="title mb-4">Latest Products</h2>
+<div class="row">
+  {% for variant in variants %}
+  <div class="col-md-4 mb-4">
+    {% if variant %}
+    <div class="product-card" style="cursor: pointer;">
+
+      <!-- Discount badge -->
+      {% if variant.product.id in offerd_product_ides or variant.product.brand.id in offerd_brand_ides %}
+        <span class="discount-badge">
+          {% if variant.product.id in offerd_product_ides %}
+            {% for p_offer in p_offers %}
+              {% if p_offer.product.id == variant.product.id %}
+                {% if variant.product.brand.id in offerd_brand_ides %}
+                  {% for b_offer in b_offers %}
+                    {% if b_offer.brand.id == variant.product.brand.id %}
+                      {% if b_offer.percentage > p_offer.percentage %}
+                        -{{b_offer.percentage}}%
+                      {% else %}
+                        -{{p_offer.percentage}}%
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  -{{p_offer.percentage}}%
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {% elif variant.product.brand.id in offerd_brand_ides %}
+            {% for b_offer in b_offers %}
+              {% if b_offer.brand.id == variant.product.brand.id %}
+                -{{b_offer.percentage}}%
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </span>
+      {% endif %}
+
+      <!-- Product image -->
+      <img src="{{variant.image.url}}" class="product-img" alt="{{variant.product.name}}">
+
+      <!-- Hover popup -->
+      <a href="{% url 'variant_details' variant.id %}">
+      <div class="popup-overlay"></a>
+        <div class="add-cart">
+          <button class=" btn add-to-cart-btn popup-btn" data-variant-id="{{variant.id}}">
+            Add Cart
+          </button>
+        </div>
+        <div class="wish_cart">
+          <a href="{% url 'variant_details' variant.id %}">
+          <button class="view"><i class="fas fa-eye"></i></button></a>
+          <button class="wishlist add-to-wishlist-btn" data-variant-id="{{ variant.id }}">
+            <i class="fas fa-heart"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Product details -->
+      <p class="product-title">{{variant.product.name}}</p>
+      <p class="product-category">Laptops</p>
+      {% if variant.product.id in offerd_product_ides or variant.product.brand.id in offerd_brand_ides %}
+        <p class="product-price">
+          ₹{{variant.price|floatformat:0}}
+          <span class="old-price">₹{{variant.price}}</span>
+        </p>
+      {% else %}
+        <p class="product-price">₹{{variant.price}}</p>
+      {% endif %}
+
+      <!-- Stock info -->
+      {% if not variant.is_active or not variant.product.is_active %}
+        <p style="color: burlywood;">Unavailable</p>
+      {% elif variant.quantity > 0 %}
+        <p style="color: chartreuse;">In stock {{ variant.quantity }} pcs</p>
+      {% else %}
+        <p style="color: red;">Out of stock</p>
+      {% endif %}
+
+      <!-- Rating -->
+      <div class="rating">
+        <i class="fa fa-star"></i>
+        <i class="fa fa-star"></i>
+        <i class="fa fa-star"></i>
+        <i class="fa fa-star"></i>
+        <i class="fa fa-star-o"></i>
+      </div>
+
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+  
+    <!-- Show More Button -->
+    <div class="d-grid gap-2 col-2 mx-auto py-3">
+      <a href="{% url 'list_products' %}">
+        <button class="btn text-primary fw-bold btn-outline-dark" type="button">Show More</button>
+      </a>
+    </div>
+
+  </div>
+</div>
+</section>
+<!-- brand slider -->
+<section class="py-3">
+   <div class="logos">
+       <div class="logos-slide">
+           <img src="{% static 'images/dell.png' %}" alt="">
+           <img src="{% static 'images/lenovo.png' %}" alt="">
+           <img src="{% static 'images/hp.png' %}" alt="">
+           <img src="{% static 'images/tosiba.png' %}" alt="">
+           <img src="{% static 'images/acer.png' %}" alt="">
+       </div>
+       <div class="logos-slide">
+           <img src="{% static 'images/dell.png' %}" alt="">
+           <img src="{% static 'images/lenovo.png' %}" alt="">
+           <img src="{% static 'images/hp.png' %}" alt="">
+           <img src="{% static 'images/tosiba.png' %}" alt="">
+           <img src="{% static 'images/acer.png' %}" alt="">
+       </div>
+       <div class="logos-slide">
+           <img src="{% static 'images/dell.png' %}" alt="">
+           <img src="{% static 'images/lenovo.png' %}" alt="">
+           <img src="{% static 'images/hp.png' %}" alt="">
+           <img src="{% static 'images/tosiba.png' %}" alt="">
+           <img src="{% static 'images/acer.png' %}" alt="">
+       </div>
+   </div>
+
+</section>
+
+<!-- offerbanner -->
+ <section class="py-3">
+   <div class="container">
+       <div class="row">
+           <div class="col-md-6">
+               <img src="{% static 'images/40%off.jpeg' %}" alt="" width="665px" height="253px">
+           </div>
+           <div class="col-md-6">
+               <img src="{% static 'images/clearensale.jpeg' %}" alt="" width="665px" height="253px">
+           </div>
+       </div>
+   </div>
+
+ </section>
+
+
+<!-- image college -->
+<section class="py-3">
+ <div class="container mt-4">
+   
+   <div class="row g-3">
+       <div class="col-md-6">
+           <div class="img-container">
+               <img src="{% static 'images/DREAM.png' %}" alt="Image 1" width="640px" height="579px">
+           </div>
+       </div>
+       <div class="col-md-6">
+           <div class="row ">
+               <div class="col-6">
+                   <div class="img-container">
+                       <img src="{% static 'images/DREAM (1).png' %}" alt="Image 3" width="442px" height="382px">
+                      
+                   </div>
+               </div>
+               <div class="col-6">
+                   <div class="img-container">
+                       <img src="{% static 'images/LAPTOPBANNER.webp' %}" alt="Image 3" width="442px" height="382px">
+                   </div>
+               </div>
+               <div class="col-6">
+                   <div class="img-container">
+                       
+                       <img src="{% static 'images/BannerACCESORIES.webp' %}" alt="Image 1" width="433px" height="197px" > 
+                   </div>
+               </div>
+               <div class="col-6">
+                   <div class="img-container">
+                       <img src="{% static 'images/APPLE.jpg' %}" alt="Image 4 " width="345px" height="197px">
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+</section>
+<!-- Toastify CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+<!-- Toastify JS -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+
+<script>
+    $(document).ready(function() {
+      $('.add-to-cart-btn').click(function(e) {
+        $(document).on('click', '.add-to-cart-btn', function(e) {
+            var variantId = $(this).data('variant-id');
+            
+            $.ajax({
+                url: "{% url 'add_to_cart' 0 %}".replace('0', variantId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'added' || response.status === 'quantity_updated') {
+                        Toastify({
+                            text: "Item added to cart!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'unauthenticated') {
+                        Toastify({
+                            text: "Please sign in to add items to your cart.!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'max') {
+                        Toastify({
+                            text: "The item rached max limit on your cart.",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "yellow",
+                            stopOnFocus: true,
+                        }).showToast();
+                    }
+                }
+            });
+        });
+      });
+        
+        $('.add-to-wishlist-btn').click(function(e) {
+            e.preventDefault();
+            var variantId = $(this).data('variant-id');
+            
+            $.ajax({
+                url: "{% url 'add_to_wishlist' 0 %}".replace('0', variantId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'added') {
+                        Toastify({
+                            text: "Item added to wishlist!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'exists') {
+                        Toastify({
+                            text: "Item already in wishlist!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "yellow",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'unauthenticated') {
+                        Toastify({
+                            text: "Please sign in to add items to your wishlist.!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red",
+                            stopOnFocus: true,
+                        }).showToast();
+                    }
+                }
+            });
+        });
+    });
+ </script>
+    
+  

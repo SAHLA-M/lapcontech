@@ -12,10 +12,13 @@
         <!-- Bootstrap icons-->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css " rel="stylesheet" />
         <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="{% static 'css/style.css' %}" rel="stylesheet" />
         <link href="{% static 'css/styles.css' %}" rel="stylesheet" />
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
          <!-- fontawsom icons-->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-papD8p13YdNq+gTWybv+zOSk+Nv9AbpjrJ2cNoqaqLKm3+5g7ZT+nl6Tqz6Z+YqzYkU49fH/qRgnnObHZ/0bDQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     </head>
     <body>
@@ -41,7 +44,7 @@
                        
                     </ul>
                     <form class="d-flex">
-                        <a href="" class="btn btn-outline-dark" type="submit">
+                        <a href="{% url 'view_cart' %}" class="btn btn-outline-dark" type="submit">
                             <i class="bi-cart-fill me-1"></i>
                             Cart
                             <span class="badge bg-dark text-white ms-1 rounded-pill cart-items-count">{{ request.session.cart_data_obj|length}}</span>
@@ -70,7 +73,7 @@
         {% endblock contant%}
         <!-- Footer-->
          <hr>
-        <footer class="py-5 >
+        <footer class="py-5 ">
             <div class="container-fluid p-0 border-top bg-white">
                 <div class="container pt-5">
                     <div class="pb-5 border-bottom">
@@ -186,7 +189,177 @@
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
+        
+
+            <script>
+        document.getElementById('logout').addEventListener('click', function (e) {
+            e.preventDefault();  // Prevent the default anchor behavior
+    
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you really want to log out?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#124e66',
+                confirmButtonText: 'Yes, log out!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to the logout URL
+                    window.location.href = "{% url 'signout' %}";
+                } else {
+                    Toastify({
+                        text: "Logout canceled.",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "green",
+                        stopOnFocus: true,
+                    }).showToast();
+                }
+            });
+        });
+    
+        function toggleDropdown() {
+            var dropdown = document.getElementById("dropdown");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+    
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.avatar')) {
+                var dropdown = document.getElementById("dropdown");
+                if (dropdown.style.display === "block") {
+                    dropdown.style.display = "none";
+                }
+            }
+        }
+    </script>
+
+
+    <script>
+        var MenuItems = document.getElementById("MenuItems");
+        MenuItems.style.maxHeight = "0px";
+        function menutoggle() {
+            if (MenuItems.style.maxHeight == "0px") {
+                MenuItems.style.maxHeight = "200px"
+            }
+            else {
+                MenuItems.style.maxHeight = "0px"
+            }
+        }
+    </script>
+
+    
+    <script>
+    $(document).ready(function() {
+        $('.add-to-cart-btn').click(function(e) {
+            e.preventDefault();
+            var variantId = $(this).data('variant-id');
+            
+            $.ajax({
+                url: "{% url 'add_to_cart' 0 %}".replace('0', variantId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'added' || response.status === 'quantity_updated') {
+                        Toastify({
+                            text: "Item added to cart!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'unauthenticated') {
+                        Toastify({
+                            text: "Please sign in to add items to your cart.!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'max') {
+                        Toastify({
+                            text: "The item rached max limit on your cart.",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "yellow",
+                            stopOnFocus: true,
+                        }).showToast();
+                    }
+                }
+            });
+        });
+        
+        $('.add-to-wishlist-btn').click(function(e) {
+            e.preventDefault();
+            var variantId = $(this).data('variant-id');
+            
+            $.ajax({
+                url: "{% url 'add_to_wishlist' 0 %}".replace('0', variantId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'added') {
+                        Toastify({
+                            text: "Item added to wishlist!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'exists') {
+                        Toastify({
+                            text: "Item already in wishlist!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "yellow",
+                            stopOnFocus: true,
+                        }).showToast();
+                    } else if (response.status === 'unauthenticated') {
+                        Toastify({
+                            text: "Please sign in to add items to your wishlist.!",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red",
+                            stopOnFocus: true,
+                        }).showToast();
+                    }
+                }
+            });
+        });
+    });
+    </script>
+   <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const offeredPrice = document.querySelectorAll('.offered-price')
+        const offer = document.querySelectorAll('.offer')
+        const vPrice = document.querySelectorAll('.variant-price')
+        for (let i = 0; i < offeredPrice.length; i++) {
+            offeredP = vPrice[i].textContent - (vPrice[i].textContent*offer[i].textContent/100)
+            offeredPrice[i].textContent = '₹' + offeredP
+          }
+
+        const ofer_percent = offer.textContent;
+        const variantPrice = vPrice.textContent;
+        console.log(variantPrice,offeredPrice)
+        let price = variantPrice - (variantPrice*ofer_percent/100)
+        offeredPrice.textContent = price
+    });
+   </script>
+
     </body>
 </html>
 

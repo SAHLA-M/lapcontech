@@ -47,8 +47,9 @@ def product_list_category(request, category_id):
 @user_passes_test(is_staff,login_url='/')
 def add_product(request):
     if request.method=='POST':
-        name=request.POST['nmae']
+        name=request.POST['name']
         description=request.POST['description']
+        category_id = request.POST['category']
         category = Category.objects.get(id=category_id)
         brand_id = request.POST['brand']
         brand = Brand.objects.get(id=brand_id)
@@ -246,9 +247,9 @@ def edit_variant(request, variant_id):
 
         # Clear existing secondary images if new ones are uploaded
         if secondary_images:
-            variant.secondaryimage_set.all().delete()
+            variant.secondary_images.all().delete()
             for image in secondary_images:
-                variant.secondaryimage_set.create(image=image)
+                 SecondaryImages.objects.create(variant=variant, image=image)
 
         # Save the changes
         variant.save()

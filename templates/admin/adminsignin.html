@@ -10,9 +10,9 @@
         content="admin, estimates, bootstrap, business, corporate, creative, invoice, html5, responsive, Projects">
     <meta name="author" content="Dreamguys - Bootstrap Admin Template">
     <meta name="robots" content="noindex, nofollow">
-    <title>PhonoPedia Admin| SignIn</title>
+    <title>Lapcon Admin| SignIn</title>
 
-    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/logo-small.png' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'image/logolapcon.png' %}">
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
 
@@ -41,14 +41,14 @@
                             <div class="form-login">
                                 <label>Username</label>
                                 <div class="form-addons">
-                                    <input type="text" placeholder="Enter your Username" required minlength="5" name="username" value="hasan" onkeyup="if (/[^|a-z0-9_.]+/g.test(this.value)) this.value = this.value.replace(/[^|a-z0-9_.]+/g,'')">
+                                    <input type="text" placeholder="Enter your Username" required minlength="5" name="username" placeholder='ADMIN NAME' onkeyup="if (/[^|a-z0-9_.]+/g.test(this.value)) this.value = this.value.replace(/[^|a-z0-9_.]+/g,'')">
                                     <img src="{% static 'img_admin/icons/users1.svg' %}" alt="img">
                                 </div>
                             </div>
                             <div class="form-login">
                                 <label>Password</label>
                                 <div class="pass-group">
-                                    <input type="password" class="pass-input" placeholder="Enter your password" required name="password" value="1" onkeyup="if (/[^|A-Za-z0-9!@#$%^&*(.)_]+/g.test(this.value)) this.value = this.value.replace(/[^|a-z0-9_.]+/g,'')">
+                                    <input type="password" class="pass-input" required name="password" placeholder="ENTER PASSWORD" onkeyup="if (/[^|A-Za-z0-9!@#$%^&*(.)_]+/g.test(this.value)) this.value = this.value.replace(/[^|a-z0-9_.]+/g,'')">
                                     <span class="fas toggle-password fa-eye-slash"></span>
                                 </div>
                             </div>
@@ -61,7 +61,7 @@
                             {% endif %}
                             <div class="form-login">
                                 <div class="alreadyuser">
-                                    <h4><a href="" class="hover-a">Forgot Password?</a></h4>
+                                    <h4><a href="{% url 'admin_forgot_password' %}" class="hover-a">Forgot Password?</a></h4>
                                 </div>
                             </div>
                             <div class="form-login">

@@ -12,6 +12,7 @@ from .forms import varification
 from django.core.mail import send_mail
 from django.conf import settings
 from datetime import datetime,timedelta
+from Users.models import Address,Profile,Wallet
 
 
 
@@ -51,9 +52,13 @@ def signout(request):
     if request.session.session_key:
         user_id = request.session.get("_auth_user_id")
         user = User.objects.get(pk=user_id)
-       
-        logout(request)
-        return redirect(home)
+        if user.is_staff:
+            logout(request)
+            return redirect(admin_signin)
+        
+        else:  
+            logout(request)
+            return redirect(home)
 
 
 @never_cache
@@ -118,6 +123,13 @@ def email_varification(request):
                 if not User.objects.filter(email=email).exists():
                     messages.error(request, "This email is not registered with Lapcon.")
                     return redirect('forgot_password')
+                
+
+            elif request.session.get == 'change_email':
+                if User.objects.filter(email=email).exists():
+                    messages.error(request, "This email is already in use by another account.")
+                    return redirect('account_details')
+                request.session['new_email'] = email     
 
             # ✅ Send OTP
             secret_key = pyotp.random_base32()
@@ -167,15 +179,17 @@ def otp_check(request):
 
         if otp_c == otp:
             email = request.session['email']
+            flow_type = request.session.get('type')
 
-            if request.session.get('type') == 'exist':
-                request.session['email'] = email
+            if flow_type == 'exist':
+                
                 return redirect(change_password)
-
-            if not User.objects.filter(email=email).exists():   # ✅ check first
+            if flow_type=='notexisting':
+              if not User.objects.filter(email=email).exists():   # ✅ check first
                 username = request.session.get('username')
                 if not username:  # fallback if session failed
                          username = email.split("@")[0] 
+                         
                           
                 password = request.session.get('password')
                 phone = request.session.get('phone')
@@ -194,7 +208,15 @@ def otp_check(request):
                 
                 user.save()
                 messages.success(request, 'Account created successfully! Please log in.')
-            
+
+
+            if flow_type == 'change_email':
+                new_email = request.session.get('new_email')
+                if new_email:
+                    user = request.user
+                    user.email = new_email
+                    user.save()
+                    messages.success(request, 'Your email has been updated successfully!')
 
             request.session.flush()
             return redirect(signin)
@@ -314,7 +336,7 @@ def admin_forgot_password(request):
     form = varification()
     if request.method == 'POST':
         if not User.objects.filter(email=request.POST['email']).exists():
-            messages.error(request, 'This mail id do not have an account in Phonopedia')
+            messages.error(request, 'This mail id do not have an account in Lapcon')
             return redirect(admin_forgot_password)
         user = User.objects.get(email=request.POST['email'])
         if user.is_staff:
@@ -322,11 +344,11 @@ def admin_forgot_password(request):
             if form.is_valid():
                 print('hi')
                 request.session['email'] = request.POST['email']
-                subject = 'Email varification PhonoPedia'
+                subject = 'Email varification Lapcon'
                 totp = pyotp.TOTP(secret_key)
                 otp = totp.now()
                 request.session['otp'] = otp
-                message = f'Your otp is ({otp}).Use this otp to verify your email id to change your passsword for admin account in phonopedia'
+                message = f'Your otp is ({otp}).Use this otp to verify your email id to change your passsword for admin account in Lapcon'
                 recipient = form.cleaned_data.get('email')
                 send_mail(subject, message, settings.EMAIL_HOST_USER, [recipient], fail_silently=False)
                 return redirect(Admin_verify)
@@ -360,7 +382,7 @@ def Admin_verify(request):
             request.session['otp_created_at'] = datetime.now().timestamp()
 
             # Resend the email
-            subject = 'Resend OTP - PhonoPedia'
+            subject = 'Resend OTP - Lapcon'
             message = f'Your new OTP is ({otp}). Use this to verify your email. Please do not share this OTP with anyone.'
             recipient = request.session['email']
             send_mail(subject, message, settings.EMAIL_HOST_USER, [recipient], fail_silently=False)
@@ -387,3 +409,67 @@ def Admin_verify(request):
     otp_created_at = datetime.fromtimestamp(request.session.get('otp_created_at', datetime.now().timestamp()))
     time_left = max(0, (otp_created_at + timedelta(minutes=OTP_VALIDITY_PERIOD) - datetime.now()).seconds)
     return render(request, 'admin/verify_otp.html', {'time_left': time_left}) 
+
+@never_cache
+def account_details(request):
+    if request.user.is_authenticated:
+        user = User.objects.get(username=request.user)
+        addresses = Address.objects.filter(user=user)
+
+        if request.method == 'POST':
+            username = request.POST['username']
+            email = request.POST['email']
+            f_name = request.POST['f_name']
+            l_name = request.POST['l_name']
+            phone = request.POST['phone']
+            new_email = request.POST.get('email') 
+            # check if username is changing
+            if user.username != username:
+                if User.objects.filter(username=username).exists():
+                    messages.error(request, 'This username is already taken')
+                else:
+                    user.username = username 
+
+            # check if email is changing
+            if new_email and user.email != new_email:
+                if User.objects.filter(email=new_email).exists():
+                    messages.error(request, "This email is already in use by another account.")
+                    return redirect('account_details')
+
+                # store in session and redirect to email verification
+                request.session['type'] = 'change_email'
+                request.session['new_email'] = new_email
+                return redirect('email_varification')  # go to OTP verification
+
+
+            user.first_name = f_name
+            user.last_name = l_name
+            user.phone = phone
+            user.save()
+
+            messages.success(request, "Profile updated successfully!")
+
+        profile, created = Profile.objects.get_or_create(user=user)
+        return render(request, 'usesr_details.html', {
+            'user': user,
+            'addresses': addresses,
+            'profile': profile
+        })
+    else:
+        return redirect(signin)
+
+    
+def old_password(request, user_id):
+    if request.method == 'POST' :
+        password = request.POST['password']
+        username = User.objects.get(pk=user_id).username
+        user_P=authenticate(username=username ,password=password)
+        
+        if user_P:
+            request.session['email'] = user_P.email
+            return redirect(change_password)
+        else :
+            messages.error(request,'The old password was wrong')
+            return redirect(old_password,user_id)
+        
+    return render(request,'old_password.html') 

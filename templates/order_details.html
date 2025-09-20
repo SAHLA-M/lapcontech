@@ -1,0 +1,167 @@
+{% extends 'blank_layout.html' %}
+{% load static %}
+{% block title %}Order details {% endblock %}
+{% block contant %}
+<style>
+    .invoice-card {
+        border: 1px solid #ccc;
+        border-radius: 50px;
+        padding: 20px;
+        margin-bottom: 10px;
+    }
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .invoice-header h2 {
+        margin: 0;
+    }
+    .invoice-header .btn {
+        margin-left: 10px;
+    }
+    .invoice-details {
+        margin-top: 20px;
+    }
+    .btn-danger {
+        color: #ffffff;
+        background-color: red;
+        border: red 1px solid;
+    }
+    .invoice-header { text-align: center; }
+    .invoice-details { margin-top: 20px; }
+    .invoice-details th, .invoice-details td { padding: 8px; border: 1px solid #ddd; }
+    .total { text-align: right; margin-top: 20px; }
+</style>
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+</script>
+
+
+<!-- All Products -->
+<br><br><br>
+<div class="container mt-5">
+    <div class="invoice-card" style="display: flex; flex-wrap: wrap;">
+        <img src="{{order_item.variant.image.url}}" style="width: 28%;">
+        <div>
+        <div class="invoice-header">
+            <h2>{{order_item.variant.product.name}}</h2>
+            <div>
+                {% if order_item.status != 'delivered' and order_item.status != 'cancelled' %}
+                    <button type="button" class="btn btn-danger" id="cancel_order">cancel order</button>
+                    {% endif %}
+
+                    {% if order_item.status == 'delivered' %}
+                    <button type="button" class="btn btn-primary" id="return_order">Return</button>
+                    <a class="btn btn-secondary" href="{% url 'generate_invoice_pdf' order_item.id %}">Invoice</a>
+                    {% endif %}
+                {% if order_item.order.pyment_status == 'pending' and order_item.order.pyment_method == 'Razorpay'%}
+                    <a class="btn btn-secondary" id="retry_Payment">Retry Payment</a>
+                {% endif %}
+               
+            </div>
+        </div>
+        <div class="invoice-details">
+            <p><strong>Unit Price:</strong> ₹ {{order_item.unit_price}}</p>
+            <p><strong>Quantity:</strong>  {{order_item.quantity}}</p>
+            <p><strong>Total price:</strong> ₹ {{order_item.price}}</p>
+            <p><strong>Disscount:</strong>- ₹ {{order_item.order.discount}}</p>
+            <p><strong>Buyer:</strong> {{order_item.order.delivery_address.name}}</p>
+            <p><strong>Address:</strong> {{order_item.order.delivery_address.house_name}}, {{order_item.order.delivery_address.road}}, 
+                {{order_item.order.delivery_address.place}}, {{order_item.order.delivery_address.district}}, {{order_item.order.delivery_address.state}}, India</p>
+            <p><strong>Order placed on:</strong> {{order_item.order.order_date}}</p>
+            <p><strong>Order status:</strong> {{order_item.status}}</p>
+            <p><strong>Payment option:</strong> {{order_item.order.pyment_method}}</p>
+            <p><strong>Payment status:</strong> {{order_item.order.pyment_status}}</p>
+            {% if order_item.status != 'delivered'%}
+            <p><strong>Order will be deliverd befor :</strong> {{order_item.order.delivery_date}}</p>
+            {%endif%}
+        </div></div>
+    </div>
+</div>
+<br><br><br><br><br>
+
+<!-- javascript -->
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Optional menu guard (prevents JS from dying if #MenuItems is missing)
+  const MenuItems = document.getElementById("MenuItems");
+  if (MenuItems) {
+    MenuItems.style.maxHeight = "0px";
+    window.menutoggle = function () {
+      MenuItems.style.maxHeight = (MenuItems.style.maxHeight === "0px") ? "200px" : "0px";
+    };
+  }
+
+  // CANCEL ORDER
+  const cancelBtn = document.getElementById('cancel_order');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want to cancel this order?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, cancel!',
+        cancelButtonText: 'No, go back',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Redirect to Django view
+          window.location.href = "{% url 'cancel_order' order_item.id %}";
+        }
+      });
+    });
+  }
+
+  // RETURN ORDER
+  const returnBtn = document.getElementById('return_order');
+  if (returnBtn) {
+    returnBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want to return this product?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, request return!',
+        cancelButtonText: 'No, keep it',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "{% url 'return_order' order_item.id %}";
+        }
+      });
+    });
+  }
+});
+</script>
+
+
+                
+
+
+{% endblock %}

@@ -157,39 +157,8 @@ def add_user(request):
              return redirect(add_user)
     return render(request, 'admin/add_user.html')
 
-@login_required(login_url='admin_signin')
-@user_passes_test(is_staff, login_url='/') 
-def add_user(request):
-    if request.method == 'POST' :
-        try :
-            email = request.POST.get('email')
-            username = request.POST['username']
-            password = request.POST['password']
-            f_name = request.POST['f_name']
-            l_name = request.POST['l_name']
-            user = User.objects.create_user(username=username, password=password, email=email, first_name=f_name, last_name=l_name)
-            return redirect (view_users)
-        except Exception as e:
-             messages.error = "This username or email address is already taken. Please choose another one."
-             return redirect(add_user)
-    return render(request, 'admin/add_user.html')
 
-@login_required(login_url='admin_signin')
-@user_passes_test(is_staff, login_url='/') 
-def add_user(request):
-    if request.method == 'POST' :
-        try :
-            email = request.POST.get('email')
-            username = request.POST['username']
-            password = request.POST['password']
-            f_name = request.POST['f_name']
-            l_name = request.POST['l_name']
-            user = User.objects.create_user(username=username, password=password, email=email, first_name=f_name, last_name=l_name)
-            return redirect (view_users)
-        except Exception as e:
-             messages.error = "This username or email address is already taken. Please choose another one."
-             return redirect(add_user)
-    return render(request, 'admin/add_user.html')
+
 
 
 @login_required(login_url='admin_signin')

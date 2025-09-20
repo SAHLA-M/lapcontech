@@ -1,0 +1,65 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-light " style="background-color: #0db3f06b;">
+    <div class="container px-4 px-lg-2">
+       
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse me-5 " id="navbarSupportedContent" >
+            <ul class="navbar-nav  me-5 ">
+                <li class="nav-item bs-blue p-3"><a class="nav-link active text-primary fw-bolder " aria-current="page" href="#!">HOME</a></li>
+                <li class="nav-item p-3"><a class="nav-link text-primary fw-bolder" href="#!">COMPUTING</a></li>
+                <li class="nav-item p-3"><a class="nav-link  text-primary fw-bolder" href="#!">SMARTPHONE&TABLETS</a></li>
+                <li class="nav-item p-3"><a class="nav-link text-primary fw-bolder" href="#!">WATCHES</a></li>
+                <li class="nav-item p-3"><a class="nav-link text-primary fw-bolder" href="#!">CONTACT US</a></li>
+            </ul>
+            
+        </div>
+ 
+ 
+        <div class="collapse navbar-collapse " id="navbarSupportedContent" >
+            <ul class="navbar-nav  me-5 ">
+                
+                <li class="nav-item p-3">
+                    <a class="nav-link" href="#">
+                      <img src="{% static 'images/glob.jpg' %}" alt="Home" width="30" height="30">
+                    </a>
+                  </li>
+                  <li class="nav-item p-3">
+                    <a class="nav-link" href="#">
+                      <img src="{% static 'images/compare.png' %}" alt="Home" width="30" height="30">
+                    </a>
+                  </li>
+                  <li class="nav-item p-3">
+                    <a class="nav-link" href="{% url 'wishlist' %}">
+                      <img src="{% static 'images/wishlist.png' %}" alt="Home" width="30" height="30">
+                    </a>
+                  </li>
+                  <li class="nav-item p-3">
+                    <a class="nav-link" href="#">
+                      <img src="{% static 'images/cart.png' %}" alt="Home" width="30" height="30">
+                    </a>
+                  </li>  
+                  
+                      
+                  <li class="nav-item dropdown p-2">
+    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="{% static 'images/customer.png' %}" alt="Profile" width="40" height="40" class="rounded-circle">
+    </a>
+    <ul class="dropdown-menu dropdown-menu-dark">
+        <li><a class="dropdown-item active" href="{% url 'account_details' %}">My Account</a></li>
+        <li><a class="dropdown-item" href="{% url 'view_orders' %}">My Order</a></li>
+        <li><a class="dropdown-item" href="#">My Wallet</a></li>
+        <li><a class="dropdown-item" href="#">My Wishlist</a></li>
+        <li><a class="dropdown-item" href="#">Settings</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#">{{ user.username }}</a></li>
+        {% if request.user.is_authenticated %}
+        <li><a class="dropdown-item text-danger" href="{% url 'signout' %}">Logout</a></li>
+        {% else %}
+        <li><a class="dropdown-item" href="{% url 'signin' %}">Login</a></li>
+        {% endif %}
+    </ul>
+</li>
+
+            </div>
+ </nav>
+ 
