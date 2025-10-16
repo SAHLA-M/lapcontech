@@ -272,8 +272,8 @@
                                     alt="img"><span>
                                     Coupon</span> <span class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="">Add Coupon</a></li>
-                                <li><a href="">All coupons</a></li>
+                                <li><a href="{% url 'add_coupon' %}">Add Coupon</a></li>
+                                <li><a href="{% url 'list_coupons' %}">All coupons</a></li>
                             </ul>
                         </li>
                         <!-- <li>
@@ -329,10 +329,10 @@
                             <a href="javascript:void(0);"><i data-feather="award"></i><span> Offers </span> <span
                                     class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="">Add a product offer</a></li>
-                                <li><a href="">Add a brand offer</a></li>
-                                <li><a href="">All product offers</a></li>
-                                <li><a href="">All brand offers</a></li>
+                                <li><a href="{% url 'add_product_offer' %}">Add a product offer</a></li>
+                                <li><a href="{% url 'add_brand_offer' %}">Add a brand offer</a></li>
+                                <li><a href="{% url 'view_product_offers' %}">All product offers</a></li>
+                                <li><a href="{% url 'view_brand_offers' %}">All brand offers</a></li>
                                 <!-- <li><a href="icon-fontawesome.html">All category offers</a></li> -->
                                 <!-- <li><a href="icon-fontawesome.html">Add a new offer</a></li> -->
                             </ul>

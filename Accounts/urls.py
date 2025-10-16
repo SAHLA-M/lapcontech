@@ -17,9 +17,4 @@ urlpatterns=[
     path('admin_forgot_password', views.admin_forgot_password,name='admin_forgot_password'),
     path('Admin_verify', views.Admin_verify,name='Admin_verify'),
 
-
-
-
-
-
 ]

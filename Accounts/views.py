@@ -165,7 +165,7 @@ def otp_check(request):
             messages.success(request, 'A new OTP has been sent to your email.')
             return redirect(otp_check)
 
-        # ✅ combine OTP from multiple inputs
+        #  combine OTP from multiple inputs
         otp_c = "".join(request.POST.getlist("otp[]"))
         otp = str(request.session.get('otp'))
         otp_created_at = datetime.fromtimestamp(
@@ -185,7 +185,7 @@ def otp_check(request):
                 
                 return redirect(change_password)
             if flow_type=='notexisting':
-              if not User.objects.filter(email=email).exists():   # ✅ check first
+              if not User.objects.filter(email=email).exists():  
                 username = request.session.get('username')
                 if not username:  # fallback if session failed
                          username = email.split("@")[0] 
@@ -261,7 +261,7 @@ def forgot_password(request):
             send_mail(subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False)
 
             messages.success(request, "An OTP has been sent to your email.")
-            return redirect('otp_check')   # same OTP check flow as signup
+            return redirect('otp_check')   
 
     return render(request, 'confirm_email.html', {'form': form})
 
@@ -295,7 +295,7 @@ def change_password(request):
 
 
 def old_password(request, user_id):
-    """(Optional) Used if logged-in user wants to change password by verifying old one"""
+   
     if request.method == 'POST':
         password = request.POST.get('password')
         username = User.objects.get(pk=user_id).username
@@ -314,7 +314,7 @@ def old_password(request, user_id):
 @never_cache
 def admin_signin(request):
     if request.user.is_authenticated:  
-        if request.user.is_staff:  # directly check staff flag
+        if request.user.is_staff:  #  check staff 
             return redirect(admin_panel)
         else:
             return redirect(home)
@@ -473,3 +473,27 @@ def old_password(request, user_id):
             return redirect(old_password,user_id)
         
     return render(request,'old_password.html') 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
