@@ -75,12 +75,14 @@ def signup(request):
             email = request.POST['email']
             # check if username or email already exists
             if User.objects.filter(username=username).exists():
-                error_message = "This username is already taken. Please choose another one."
-                return render(request, 'signup.html', {'error_message': error_message})
+                messages.error(request, "This username is already taken. Please choose another one.")
+
+                
+                return render(request, 'SignUp.html')
 
             if User.objects.filter(email=email).exists():
-                error_message = "This email is already registered. Please use another email."
-                return render(request, 'signup.html', {'error_message': error_message})
+                messages.error(request, "This email is already registered. Please use another email.")
+                return render(request, 'SignUp.html')
 
 
             request.session['username']=request.POST['username']
@@ -93,9 +95,9 @@ def signup(request):
             
             return render(request,'Confirm_email.html',{'email':email})
         except Exception as e:
-            messages.error="this username or email address is already taken .please choose another one."
+            messages.error(request,"this username or email address is already taken .please choose another one.")
             return redirect(signup)
-    return render(request,'signup.html',{'user':user,'error_message':error_message})  
+    return render(request,'SignUp.html',{'user':user})  
 @never_cache
 def email_varification(request):
     form = varification()

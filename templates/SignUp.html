@@ -8,10 +8,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" >
     <link rel="stylesheet" href="style.css">
     <title>Lapcon User | SignUp</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logolapcon.png' %}" />
+    <style>
+    .error-message {
+            color: rgb(242, 60, 60);
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight:bolder;
+
+        }
+    .valid { 
+        color: green;
+     }
+    .invalid { 
+        color: red;
+     }    
+    </style>
 </head>
 <body style="background: linear-gradient(to bottom, #6a11cb, #2575fc);">
    <!----------------------- Main Container -------------------------->
      <div class="container d-flex justify-content-center align-items-center min-vh-100">
+          
     <!----------------------- Login Container -------------------------->
        <div class="row border rounded-5 p-3 bg-white shadow box-area">
     <!--------------------------- Left Box ----------------------------->
@@ -20,12 +37,18 @@
     
    
        
-    
-   
+  
 </div>
     <!-------------------- ------ Right Box ---------------------------->
-        
+      
        <div class="col-md-6 right-box">
+        
+        {% if messages %}
+          {% for message in messages %}
+             <div class="alert alert-warning">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
           <div class="row align-items-center text-center ">
                 <div class="header-text mb-4">
                      <img src="{% static 'image/logolapcon.png' %}" class="img-fluid" style="width: 100px;">
@@ -43,54 +66,63 @@
                 </div>
              
                 <h6 class="text-center mb-3" style="color: darkgrey;">Or</h6>
-            <form enctype="multipart/form-data" method="POST" action="{% url 'signup' %}">
+            <form enctype="multipart/form-data" method="POST" action="{% url 'signup' %}" onsubmit="return validateForm()">
             {% csrf_token %}
                 <div class="row">
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="First name" name="f_name">
+                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="First name" name="f_name" id="f_name">
                         </div>
+                        <span id="fname-error" class="error-message"></span>
+
                     </div>
                     <div class="col-md-6 ">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="Last name" name="l_name" >
+                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="Last name" name="l_name"  id="l_name">
                         </div>
+                        <span id="lname-error" class="error-message"></span>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="username" name="username">
+                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="username" name="username" id="user_name">
                         </div>
+                        <span id="username-error" class="error-message"></span>
                     </div>   
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="email" class="form-control form-control-lg bg-light fs-6" placeholder="Enter Your email" name="email">
+                            <input type="email" class="form-control form-control-lg bg-light fs-6" placeholder="Enter Your email" name="email" id="email">
                         </div>
+                        <span id="email-error" class="error-message"></span>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="Phone"  required minlength="10" name="phone" onkeyup="if (/[^|0-9]+/g.test(this.value)) this.value = this.value.replace(/[^|0-9]+/g,'')">
+                            <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="Phone"  required minlength="10" name="phone"id="phone" >
                         </div>
+                        <span id="phone-error" class="error-message"></span>
                     </div>   
                     <div class="col-md-6">
                         <div class="input-group mb-3">
                             <input type="text" class="form-control form-control-lg bg-light fs-6" placeholder="Referral code(Optional)" name="referral_code" minlength="10" maxlength="10" id="referral_code" >
                         </div>
+                        
                     </div>
                 </div>
             <div class="row">
                 <div class="col-md-6">
                     <div class="input-group mb-3">
-                        <input type="password" class="form-control form-control-lg bg-light fs-6" placeholder="Password" name="password">
+                        <input type="password" class="form-control form-control-lg bg-light fs-6" placeholder="Password" name="password" id="password" oninput="validatePassword()">
                     </div>
+                    <span id="password-error" class="error-message"></span>
                 </div>
                 <div class="col-md-6 ">
                         <div class="input-group mb-3">
-                            <input type="password" class="form-control form-control-lg bg-light fs-6" placeholder="ConfirmPassword" >
+                            <input type="password" class="form-control form-control-lg bg-light fs-6" placeholder="ConfirmPassword" id="confirmpass"  oninput="checkConfirm()">
                         </div>
+                        <span id="confirm-msg" class="error-message"></span>
                 </div>
             </div>
 
@@ -117,6 +149,138 @@
       </div>
     </div>
     
+    <script>
+        function validateForm() {
+    const f_name = document.getElementById("f_name").value.trim();
+    const l_name = document.getElementById("l_name").value.trim();
+    const user_name = document.getElementById("user_name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const confirmpass = document.getElementById("confirmpass").value.trim();
+
+    const fnameErr = document.getElementById("fname-error");
+    const lnameErr = document.getElementById("lname-error");
+    const usernameErr = document.getElementById("username-error");
+    const emailErr = document.getElementById("email-error");
+    const phoneErr = document.getElementById("phone-error");
+    const passErr = document.getElementById("password-error");
+    const confirmErr = document.getElementById("confirm-msg");
+
+    // CLEAR PREVIOUS ERRORS
+    fnameErr.textContent = "";
+    lnameErr.textContent = "";
+    usernameErr.textContent = "";
+    emailErr.textContent = "";
+    phoneErr.textContent = "";
+    passErr.textContent = "";
+    confirmErr.textContent = "";
+
+    let isValid = true;
+
+   
+    if (f_name === "" || /\d/.test(f_name)) {
+        fnameErr.textContent = "Please enter your first name properly";
+        isValid = false;
+    }
+
+   
+    if (l_name === "" || /\d/.test(l_name)) {
+        lnameErr.textContent = "Please enter your last name properly";
+        isValid = false;
+    }
+
+  
+    if (user_name === "" || /\d/.test(user_name)) {
+        usernameErr.textContent = "Please enter a valid username";
+        isValid = false;
+    }
+
+    
+    if (email === "" || !email.includes("@") || !email.includes(".")) {
+        emailErr.textContent = "Please enter a valid email address";
+        isValid = false;
+    }
+
+    
+    if (phone === "" || !/^\d{10}$/.test(phone)) {
+        phoneErr.textContent = "Please enter a valid 10-digit phone number";
+        isValid = false;
+    }
+
+   
+    const passwordErrors = getPasswordErrors(password);
+    if (passwordErrors.length > 0) {
+        passErr.innerHTML = passwordErrors.map(
+            err => `<p class="invalid">${err}</p>`
+        ).join("");
+        isValid = false;
+    }
+
+    // CONFIRM PASSWORD
+    if (password !== confirmpass) {
+        confirmErr.innerHTML = `<span class="invalid">Passwords do not match ✖</span>`;
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+// REAL-TIME PASSWORD VALIDATION
+
+function validatePassword() {
+    const password = document.getElementById("password").value;
+    const errorsDiv = document.getElementById("password-error");
+
+    const errors = getPasswordErrors(password);
+
+    if (errors.length === 0) {
+        errorsDiv.innerHTML = "<p class='valid'>Strong password ✔</p>";
+    } else {
+        errorsDiv.innerHTML = errors.map(
+            err => `<p class="invalid">${err}</p>`
+        ).join("");
+    }
+}
+
+// Helper function for password rules
+function getPasswordErrors(password) {
+    let errors = [];
+
+    if (password.length < 8) errors.push("• At least 8 characters");
+    if (!/[A-Z]/.test(password)) errors.push("• At least 1 uppercase letter");
+    if (!/[a-z]/.test(password)) errors.push("• At least 1 lowercase letter");
+    if (!/[0-9]/.test(password)) errors.push("• At least 1 number");
+    if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password))
+        errors.push("• At least 1 special character");
+
+    return errors;
+}
+
+
+// REAL-TIME CONFIRM PASSWORD CHECK
+
+function checkConfirm() {
+    const pass = document.getElementById("password").value;
+    const confirm = document.getElementById("confirmpass").value;
+    const msg = document.getElementById("confirm-msg");
+
+    if (confirm === "") {
+        msg.textContent = "";
+        return;
+    }
+
+    if (pass === confirm) {
+        msg.innerHTML = `<span class="valid">Passwords match ✔</span>`;
+    } else {
+        msg.innerHTML = `<span class="invalid">Passwords do not match ✖</span>`;
+    }
+}
+
+
+
+</script>
+
 
 
 </body>

@@ -84,7 +84,9 @@ def add_to_wishlist(request,variant_id):
         return JsonResponse({'status': 'added'}, status=200)
     else :
         return JsonResponse({'status': 'unauthenticated'})
-    
+
+
+
 
 @never_cache
 def view_cart(request):
