@@ -301,7 +301,16 @@
                             backgroundColor: "yellow",
                             stopOnFocus: true,
                         }).showToast();
+                    }else if (response.status === 'error') {
+                        Toastify({
+                            text: "This product is out of stock!",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red",
+                        }).showToast();
                     }
+
                 }
             });
         });

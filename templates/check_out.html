@@ -735,10 +735,15 @@
                         window.location.href = "{% url 'susses' %}";
                     } else if (response.status === 'unauthenticated') {
                         alert('Please sign in to place an order.');
-                    }
+                    }else if (response.status === "failed") {
+                    // Stock issue or wallet issue
+                         alert('This product is now out off stock check other products');
+                         window.location.href = "{% url 'view_cart' %}";
+                }
                 }
             });
         });
+        
         
     });
     

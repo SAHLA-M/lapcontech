@@ -318,6 +318,7 @@ def variant_details(request, variant_id):
     # print(relaated_variants)
     if len(relaated_variants) > 4:
         relaated_variants = relaated_variants[1:4]
+        
     secondary_images = SecondaryImages.objects.filter(variant = variant_id)
     p_offers = Product_offer.objects.filter(product = product)
     b_offers = Brand_offer.objects.filter(brand = brand)

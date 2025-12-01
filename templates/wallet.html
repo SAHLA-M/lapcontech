@@ -3,6 +3,13 @@
 {% block title %}Orders{% endblock %}
 {% block contant %}
 <style>
+    
+    body{
+        background: #020024;
+            background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(93, 93, 240, 1) 45%, rgba(6, 78, 171, 1) 76%, rgba(0, 212, 255, 1) 100%);
+            font-family: Arial, sans-serif;
+    }
+
     .wallet-card {
         border: 1px solid #ccc;
         border-radius: 10px;
@@ -55,7 +62,7 @@
     <div class="wallet-card">
         <img src="{% static 'images/wallet.png' %}" alt="">
         <div>
-            <h1>Wallet</h1>
+            <h1 text-white >Wallet</h1>
             <div class="balance">₹{{wallet.balence}}</div>
             <br><br>
             <!-- <a href="#" class="add-balance-btn" id="add_balence">Add Balance</a> -->

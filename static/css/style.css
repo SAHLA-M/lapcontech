@@ -79,7 +79,7 @@ p{
     color: #212a31;
 }
 h1{
-    color: #124e66;
+    color: white;
 }
 
 
@@ -96,8 +96,10 @@ h1{
 }
 .col-2 h1{
     font-size: 50px;
-    line-height: 60px;
+    line-height: 30px;
     margin: 25px 0;
+    padding: 5 px;
+    width: 150%;
 }
 .btn{
     display: inline-block;

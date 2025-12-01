@@ -2,9 +2,18 @@
 {% load static %}
 {% block title %}Wishlist{% endblock %}
 {% block contant %}
+
+<style>
+    body{
+        background: #020024;
+            background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(93, 93, 240, 1) 45%, rgba(6, 78, 171, 1) 76%, rgba(0, 212, 255, 1) 100%);
+            font-family: Arial, sans-serif;
+            font-weight:900;
+    }
+</style>
 <div class="small-container">
     <div class="row row-2">
-        <h2>Wishlist</h2>
+        <h2 class="text-center text-white fw-bold">Wishlist</h2>
         <!-- <select>
             <option>Default Sort</option>
             <option>Sort By Price</option>
@@ -14,12 +23,12 @@
         </select> -->
     </div> 
 </div>
-    <div class="row" style="display: flex; flex-wrap: wrap;  flex-basis: 20%;">
+    <div class="row " style="display: flex; flex-wrap: wrap;  flex-basis: 20%; ">
            
         {% for wishlist in wishlists%}
-            <div class="col-4" style =" flex-basis: 20%;">
+            <div class="col-4 bg-white text-center " style =" flex-basis: 20%; ">
                 <a href="{% url 'variant_details' wishlist.variant.id %}">
-                    <img style="width: 250px; height: 250px;" src="{{wishlist.variant.image.url}}">
+                    <img  style="width: 250px; height: 250px;" src="{{wishlist.variant.image.url}}">
                     <h4>{{wishlist.variant.product.name}}</h4>
                     <div class="rating">
                         <i class="fa fa-star"></i>

@@ -68,7 +68,7 @@ def signup(request):
         return redirect(home)
     
     user=None
-    error_message=None
+    
     if request.method=='POST':
         try:
             username = request.POST['username']
@@ -110,7 +110,7 @@ def email_varification(request):
             if username:
                 request.session['username'] = username
 
-            # Case 1: Signup flow (type = notexisting)
+            #  Signup flow type = notexisting
             if request.session.get('type') == 'notexisting':
                 if User.objects.filter(email=email).exists():
                     messages.error(request, "This email is already registered. Please sign in.")
@@ -120,7 +120,7 @@ def email_varification(request):
                     messages.error(request, "This username is already taken. Please sign in.")
                     return redirect('signin')
 
-            # Case 2: Forgot password flow (type = exist)
+            #2 Forgot password flow type = exist
             elif request.session.get('type') == 'exist':
                 if not User.objects.filter(email=email).exists():
                     messages.error(request, "This email is not registered with Lapcon.")
@@ -133,7 +133,7 @@ def email_varification(request):
                     return redirect('account_details')
                 request.session['new_email'] = email     
 
-            # ✅ Send OTP
+            # Send OTP
             secret_key = pyotp.random_base32()
             request.session['secret_key'] = secret_key
             totp = pyotp.TOTP(secret_key)
@@ -238,7 +238,7 @@ def otp_check(request):
 
 @never_cache
 def forgot_password(request):
-    """Step 1: User enters their email for password reset"""
+    """ User enters their email for password reset"""
     request.session['type'] = 'exist'   # tells flow this is reset
     form = varification()
 
@@ -269,7 +269,7 @@ def forgot_password(request):
 
 
 def change_password(request):
-    """Step 2: After OTP verified, user sets new password"""
+    """ After OTP verified, user sets new password"""
     if request.method == 'POST':
         email = request.session.get('email')
         if not email:
@@ -441,7 +441,7 @@ def account_details(request):
                 # store in session and redirect to email verification
                 request.session['type'] = 'change_email'
                 request.session['new_email'] = new_email
-                return redirect('email_varification')  # go to OTP verification
+                return redirect('email_varification')  #  OTP verification
 
 
             user.first_name = f_name

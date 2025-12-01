@@ -364,7 +364,7 @@ p{
     color: #212a31;
 }
 h1{
-    color: #124e66;
+    color:white;
 }
 
 
@@ -379,11 +379,8 @@ h1{
     max-width: 100%;
     padding:  0;
 }
-.col-2 h1{
-    font-size: 50px;
-    line-height: 60px;
-    margin: 25px 0;
-}
+
+
 .btn{
     display: inline-block;
     background: #1d3ddd;
@@ -505,7 +502,7 @@ h1{
     transform: translateX(-50%);
 }
 h2{
-    color: #2E3944;
+    color:white;
 }
 h4{
     color: #212a31;

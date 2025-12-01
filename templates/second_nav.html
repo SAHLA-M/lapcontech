@@ -34,7 +34,7 @@
                     </a>
                   </li>
                   <li class="nav-item p-3">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link" href="{% url 'view_cart' %}">
                       <img src="{% static 'images/cart.png' %}" alt="Home" width="30" height="30">
                     </a>
                   </li>  
@@ -47,8 +47,8 @@
     <ul class="dropdown-menu dropdown-menu-dark">
         <li><a class="dropdown-item active" href="{% url 'account_details' %}">My Account</a></li>
         <li><a class="dropdown-item" href="{% url 'view_orders' %}">My Order</a></li>
-        <li><a class="dropdown-item" href="#">My Wallet</a></li>
-        <li><a class="dropdown-item" href="#">My Wishlist</a></li>
+        <li><a class="dropdown-item" href="{% url 'view_wallet' %}">My Wallet</a></li>
+        <li><a class="dropdown-item" href="{% url 'wishlist' %}">My Wishlist</a></li>
         <li><a class="dropdown-item" href="#">Settings</a></li>
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item" href="#">{{ user.username }}</a></li>

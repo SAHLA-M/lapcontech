@@ -9,6 +9,12 @@
 
 <!-- All Products -->
 <style>
+    body{
+        background: #020024;
+            background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(93, 93, 240, 1) 45%, rgba(6, 78, 171, 1) 76%, rgba(0, 212, 255, 1) 100%);
+            font-family: Arial, sans-serif;
+            font-weight:900;
+    }
     .sidenav {
         height: 100%;
         width: 0;
@@ -102,15 +108,49 @@
     }
 </style>
 
+<h2 style="font-size:30px;cursor:pointer;" class="text-center fw-bold m-3">All Products</h2>
 
 <div class="small-container">
-    <div class="search" style="display: flex;">
-        <form action="javascript:void(0);" class="serch_frm" onsubmit="searchProducts()">
-            <input class="serch_input" type="text" id="search-bar" placeholder="Search">
+    <div class="search" style="display: flex; justify-content:center;">
+        
+        <form action="javascript:void(0);" 
+              class="serch_frm" 
+              onsubmit="searchProducts()" 
+              style="position: relative; width: 80%;">
 
+            <!-- Search Icon -->
+            <i class="fa fa-search "
+               style="
+                   position: absolute; 
+                   left: 22px; 
+                   top: 65%; 
+                   transform: translateY(-50%); 
+                   color: #e7e5e5ff; 
+                   font-size: 20px;
+                   pointer-events: none;
+                   
+                   
+               ">
+            </i>
+
+            <!-- Input -->
+            <input class="serch_input" 
+                   type="text" 
+                   id="search-bar" 
+                   placeholder="Search"
+                   style="
+                       width: 100%; 
+                       padding: 12px 20px 12px 50px; 
+                       border-radius: 25px; 
+                       border: 1px solid #748d92; 
+                       background-color: transparent;
+                       color: white;
+                   ">
         </form>
+
     </div>
 </div>
+
 
 
 <div id="mySidenav" class="sidenav">
@@ -149,12 +189,12 @@
 </div>
 
 
-<div class="small-container">
-    <div class="row row-2">
-        <h2>All Products</h2>
-
+<div class="small-container  ">
+    <div class="row row-2 mt-5 ">
+        
+       <div class="d-flex justify-content-end">
         <select id="sort-options" onchange="sortProducts()">
-            <option selected value="az">Sorting</option>
+            <option selected value="az">Sorting </option>
             <option value="price_low_to_high">Price: Low to High</option>
             <option value="price_high_to_low">Price: High to Low</option>
             <option value="new_arrivals">New Arrivals</option>
@@ -162,7 +202,8 @@
             <option value="za">Z-A</option>
         </select>
     </div>
-    <span style="font-size:30px;cursor:pointer; color: #2E3944;" onclick="openNav()">Filter
+    </div>
+    <span style="font-size:30px;cursor:pointer; color: white;" onclick="openNav()">Filter
         <svg xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" fill="currentColor" class="bi bi-funnel"
             viewBox="0 0 16 16">
             <path
@@ -170,9 +211,9 @@
         </svg>
 
     </span>
-    <div class="row d-flex space-between justify-content-center" id="products-container" style="flex-wrap: wrap;">
+    <div class="row d-flex space-between justify-content-center " id="products-container" style="flex-wrap: wrap;">
         {% for variant in variants %}
-        <div class="col-4 product-item text-center " style=" margin: 10px 30px ; height:485px; "
+        <div class="col-4 product-item text-center bg-white " style=" margin: 10px 30px ; height:485px; "
             data-name="{{ variant.product.name }}" data-price="{{ variant.price }}"
             data-category="{{ variant.product.category.name }}" data-brand="{{ variant.product.brand.name }}"
             data-color="{{ variant.color }}" data-date="{{ variant.created_at|date:'Y-m-d' }}">
@@ -243,8 +284,10 @@
             {% endif %}
             <br>
               <div class="wish_cart">
-                <button class="cart add-to-cart" onclick="addtocart('{{variant.id}}')"><i class="fas fa-shopping-cart"></i></button>
-                <button class="wishlist add-to-wishlist" onclick="addtowishlist('{{variant.id}}')"><i class="fas fa-heart"></i></button>
+                 <button class=" btn add-to-cart-btn popup-btn" data-variant-id="{{variant.id}}"><i class="fas fa-shopping-cart"></i></button>
+                 <button class=" btn wishlist add-to-wishlist-btn" data-variant-id="{{ variant.id }}">
+            <i class="fas fa-heart"></i>
+          </button>
             </div>   
         </div>
         {% endfor %}
