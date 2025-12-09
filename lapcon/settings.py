@@ -25,7 +25,17 @@ SECRET_KEY = 'django-insecure-b)biuv1=ikqy9s+e9vt0f_r@ocy@-5tybma$5$)bl%)g9mfu60
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '.ngrok-free.dev',
+]
+
+# tunnel creation
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.dev',
+]
+
 
 
 # Application definition
@@ -46,6 +56,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'django.contrib.sites',
+    
     
 ]
 
@@ -167,5 +178,14 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 SOCIALACCOUNT_LOGIN_ON_GET= True
+
+RAZORPAY_API_KEY = 'rzp_test_Rnnsc6p1N3G3I7'
+
+RAZORPAY_API_SECRET = 'n0nuvx0vGhB6Hap3cpX4LnoA'
+
+
+
+
+
 
 

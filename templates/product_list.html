@@ -213,7 +213,7 @@
     </span>
     <div class="row d-flex space-between justify-content-center " id="products-container" style="flex-wrap: wrap;">
         {% for variant in variants %}
-        <div class="col-4 product-item text-center bg-white " style=" margin: 10px 30px ; height:485px; "
+        <div class="col-4 product-item text-center bg-white " style=" margin: 10px 30px ; height:655px; "
             data-name="{{ variant.product.name }}" data-price="{{ variant.price }}"
             data-category="{{ variant.product.category.name }}" data-brand="{{ variant.product.brand.name }}"
             data-color="{{ variant.color }}" data-date="{{ variant.created_at|date:'Y-m-d' }}">
@@ -304,88 +304,7 @@
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script>
-    function addtocart(variantId) {
-        $.ajax({
-            url: "{% url 'add_to_cart' 0 %}".replace('0', variantId),
-            type: 'GET',
-            success: function (response) {
-                if (response.status === 'added' || response.status === 'quantity_updated') {
-                    Toastify({
-                        text: "Item added to cart!",
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#4CAF50",
-                        stopOnFocus: true,
-                    }).showToast();
-                } else if (response.status === 'unauthenticated') {
-                    Toastify({
-                        text: "Please sign in to add items to your cart.!",
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "red",
-                        stopOnFocus: true,
-                    }).showToast();
-                } else if (response.status === 'max') {
-                    Toastify({
-                        text: "The item rached max limit on your cart.",
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "yellow",
-                        stopOnFocus: true,
-                    }).showToast();
-                }
-            }
-        });
-    }
 
-    function addtowishlist(variantId) {
-
-        $.ajax({
-            url: "{% url 'add_to_wishlist' 0 %}".replace('0', variantId),
-            type: 'GET',
-            success: function (response) {
-                if (response.status === 'added') {
-                    Toastify({
-                        text: "Item added to wishlist!",
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#4CAF50",
-                        stopOnFocus: true,
-                    }).showToast();
-                } else if (response.status === 'exists') {
-                    Toastify({
-                        text: "Item already in wishlist!",
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "yellow",
-                        stopOnFocus: true,
-                    }).showToast();
-                } else if (response.status === 'unauthenticated') {
-                    Toastify({
-                        text: "Please sign in to add items to your wishlist.!",
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "red",
-                        stopOnFocus: true,
-                    }).showToast();
-                }
-            }
-        });
-    }
-</script>
 <script>
 
     document.addEventListener("DOMContentLoaded", function () {

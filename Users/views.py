@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import render,redirect
 from Accounts.views import signin
 from django.views.decorators.cache import never_cache
@@ -17,6 +18,11 @@ from xhtml2pdf import pisa
 from datetime import date
 from django.templatetags.static import static
 from django.contrib.auth.decorators import login_required
+import razorpay
+
+
+from django.db import transaction
+
 
 # Create your views here.
 def create_wallet(user):
@@ -29,7 +35,8 @@ def create_wallet(user):
 def view_wallet(request):
     create_wallet(request.user)
     wallet = Wallet.objects.get(user=request.user)
-    transactions = Transactions.objects.all()
+    transactions = Transactions.objects.filter(wallet=wallet).order_by('-id')
+
     return render(request,'wallet.html',{'wallet':wallet,'transactions':transactions})        
 @login_required(login_url='signin')
 def add_to_cart(request, variant_id):
@@ -43,7 +50,7 @@ def add_to_cart(request, variant_id):
             'status': 'error',
             'message': 'This product is out of stock'
         })
-    # ---- Offer logic ----
+    #  Offer logic 
     p_offers = Product_offer.objects.all()
     b_offers = Brand_offer.objects.all()
     offerd_product_ides = [p_offer.product.id for p_offer in p_offers]
@@ -66,18 +73,22 @@ def add_to_cart(request, variant_id):
                 unit_price = float(variant.price) - (float(variant.price) * float(offer.percentage)) / 100
     else:
         unit_price = variant.price
-    # ----------------------
-
-    cart_item, created = Cart.objects.get_or_create(user=user, variant=variant, unit_price=unit_price)
   
 
+    cart_item, created = Cart.objects.get_or_create(user=user, variant=variant, unit_price=unit_price)
+    
+    
+    
     if not created:
         if cart_item.quantity < cart_item.variant.quantity:
             cart_item.quantity += 1
             cart_item.save()
+            Wishlist.objects.filter(user=user, variant=variant).delete()
             return JsonResponse({'status': 'quantity_updated', 'message': 'Quantity updated in cart ✅'}, status=200)
-        return JsonResponse({'status': 'max', 'message': 'Maximum stock reached ❌'}, status=200)
-
+        else:
+            return JsonResponse({'status': 'max', 'message': 'Maximum stock reached ❌'}, status=200)
+        
+ 
     return JsonResponse({'status': 'added', 'message': 'Product added to cart successfully 🛒'}, status=200)
 
 def add_to_wishlist(request,variant_id):
@@ -268,6 +279,67 @@ def add_address(request):
     return redirect(account_details)
 
 
+from django.views.decorators.http import require_POST
+@require_POST
+def apply_coupon(request):
+    user = request.user
+    if not user.is_authenticated:
+        return JsonResponse({'success': False, 'message': 'Please login'}, status=403)
+
+    coupon_code = request.POST.get('coupon')
+    total_price = request.POST.get('total_price')  # expect  total_before_discount value
+    if not coupon_code:
+        return JsonResponse({'success': False, 'message': 'Please provide coupon code'})
+
+    try:
+        total_before = Decimal(str(total_price))
+    except Exception:
+        return JsonResponse({'success': False, 'message': 'Invalid total'})
+
+    # validate coupon
+    try:
+        coupon = Coupon.objects.get(code=coupon_code)
+    except Coupon.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Invalid coupon'})
+
+    # expiry and amount checks
+    if coupon.expiry <= date.today():
+        return JsonResponse({'success': False, 'message': 'Coupon expired'})
+
+    if not (Decimal(str(coupon.min_amount)) <= total_before <= Decimal(str(coupon.max_amount))):
+        return JsonResponse({'success': False, 'message': 'Coupon not applicable for this order amount'})
+
+    # check coupon usage
+    if Coupon_usage.objects.filter(user=user, coupon=coupon).exists():
+        return JsonResponse({'success': False, 'message': 'Coupon already used by you'})
+
+    # compute discount percentage
+    discount_amount = (total_before * Decimal(str(coupon.percentage)) / Decimal('100')).quantize(Decimal('0.01'))
+
+    final_total = (total_before - discount_amount).quantize(Decimal('0.01'))
+    if final_total < 0:
+        final_total = Decimal('0.00')
+
+    # save to session floats for JSON
+    request.session['discount'] = float(discount_amount)
+    request.session['coupon_code'] = coupon.code
+    request.session['final_total'] = float(final_total)
+    request.session.modified = True
+
+    return JsonResponse({
+        'success': True,
+        'total': float(final_total),
+        'discount': float(discount_amount),
+        'coupon_code': coupon.code
+    })
+@require_POST
+def remove_coupon(request):
+    request.session.pop('discount', None)
+    request.session.pop('coupon_code', None)
+    request.session.pop('final_total', None)
+    request.session.modified = True
+    return JsonResponse({'status': 'removed'})
+
 
 def view_address(request, address_id):
     address =Address.objects.get(pk=address_id)
@@ -298,169 +370,91 @@ def update_profile_pic(request):
         user.save()
         messages.success(request, "Profile picture updated successfully!")
     return redirect("account_details")
-# def checkout(request):
-#     user = request.user
-#     addresses = Address.objects.filter(user=user)
-#     c_id = request.session.get('carts', [])
-#     tax = request.session.get('tax', 0)
 
-#     p_offers = Product_offer.objects.all()
-#     b_offers = Brand_offer.objects.all()
-#     offerd_product_ids = [p_offer.product.id for p_offer in p_offers]
-#     offerd_brand_ids = [b_offer.brand.id for b_offer in b_offers]
-
-#     carts = []
-#     for id in c_id:
-#         try:
-#             c = Cart.objects.get(pk=id)
-#             carts.append(c)
-#         except Cart.DoesNotExist:
-#             continue
-
-#     if len(carts) == 0:
-#         messages.error(request, 'Please add a product to cart to proceed.')
-#         return redirect(view_cart)
-
-#     subtotal = 0
-#     for cart in carts:
-#         # Update unit price based on offers
-#         if cart.variant.product.id in offerd_product_ids:
-#             for offer in p_offers:
-#                 if cart.variant.product.id == offer.product.id:
-#                     cart.unit_price = cart.variant.price * (1 - offer.percentage/100)
-#         elif cart.variant.product.brand.id in offerd_brand_ids:
-#             for offer in b_offers:
-#                 if cart.variant.product.brand.id == offer.brand.id:
-#                     cart.unit_price = cart.variant.price * (1 - offer.percentage/100)
-#         else:
-#             cart.unit_price = cart.variant.price
-
-#         cart.price = cart.unit_price * cart.quantity
-#         subtotal += cart.price
-
-#         # STOCK CHECK
-#         if not cart.variant.is_active:
-#             messages.error(request, f'{cart.variant.product.name} is currently unavailable! Remove it from cart.')
-#             return redirect(view_cart)
-#         elif cart.variant.quantity == 0:
-#             cart.delete()
-#             messages.warning(request, f'{cart.variant.product.name} is out of stock and removed from your cart.')
-#             return redirect(view_cart)
-#         elif cart.quantity > cart.variant.quantity:
-#             cart.quantity = cart.variant.quantity
-#             cart.save()
-#             messages.warning(request, f'The quantity of {cart.variant.product.name} has been updated to {cart.variant.quantity} due to limited stock.')
-#             return redirect(view_cart)
-
-#     total = subtotal + tax + 50
-#     total = round(total, 2)
-#     amount = int(total * 100)
-
-#     request.session['subtotal'] = int(subtotal)
-
-#     # COUPON LOGIC
-#     c_date = date.today()
-#     coupons = Coupon.objects.filter(expiry__gt=c_date, min_amount__lte=total, max_amount__gte=total)
-#     coupon_usages = Coupon_usage.objects.filter(user=user)
-#     for usage in coupon_usages:
-#         coupons = coupons.exclude(code=usage.coupon.code)
-
-#     return render(request, 'check_out.html', {
-#         'user': user,
-#         'addresses': addresses,
-#         'subtotal': subtotal,
-#         'tax': tax,
-#         'total': total,
-#         'carts': carts,
-#         'amount': amount,
-#         'coupons': coupons,
-#     })
 def checkout(request):
-    user = User.objects.get(username=request.user)
-    addresses = Address.objects.filter(user=user)
+    user = request.user
+    if not user.is_authenticated:
+        return redirect('signin')   # signin view
+
+    # fetch cart ids from session  tax ensure session keys exist
     c_id = request.session.get('carts', [])
-    tax = request.session.get('tax', 0)
+    tax = request.session.get('tax', 0)  #might be float or Decimal
+    delivery_charge = 50
 
-    p_offers = Product_offer.objects.all()
-    b_offers = Brand_offer.objects.all()
+    # fetch cart objects
+    carts = [Cart.objects.get(pk=i) for i in c_id] if c_id else []
 
-    offered_product_ids = [p.product.id for p in p_offers]
-    offered_brand_ids = [b.brand.id for b in b_offers]
-
-    carts = []
-    for id in c_id:
-        carts.append(Cart.objects.get(pk=id))
-
-    subtotal = 0
-
+    # calculate subtotal and ensure unitprice and price are available on Cart
+    subtotal_decimal = Decimal('0')
     for cart in carts:
-        # OFFER price update
-        variant = cart.variant
+        # ensure unitprice is present
+        unit_price = Decimal(str(cart.unit_price)) if hasattr(cart, 'unit_price') else Decimal(str(cart.variant.price))
+        line_total = unit_price * Decimal(str(cart.quantity))
+        subtotal_decimal += line_total
 
-        if variant.product.id in offered_product_ids:
-            for offer in p_offers:
-                cart.unit_price = float(variant.price) - (float(variant.price) * float(offer.percentage) / 100)
+    tax_decimal = Decimal(str(tax))
+    delivery_decimal = Decimal(str(delivery_charge))
 
-        elif variant.product.brand.id in offered_brand_ids:
-            for offer in b_offers:
-                cart.unit_price = float(variant.price) - (float(variant.price) * float(offer.percentage) / 100)
+    total_before_discount = subtotal_decimal + tax_decimal + delivery_decimal
 
-        else:
-            cart.unit_price = float(variant.price)
+    # read discount and coupon from session tored as float — convert to Decimal
+    coupon_code = request.session.get('coupon_code', None)
+    discount_decimal = Decimal(str(request.session.get('discount', 0))) if coupon_code else Decimal('0')
 
-        # Update cart price
-        cart.price = cart.unit_price * cart.quantity
-        subtotal += cart.price
+    # final total
+    final_total_decimal = total_before_discount - discount_decimal
+    if final_total_decimal < 0:
+        final_total_decimal = Decimal('0')
 
-        # ❗ FINAL REAL-TIME STOCK CHECK (IMPORTANT)
-        fresh_variant = Variants.objects.get(id=variant.id)
+    # create Razorpay order (optional) and amount in paise
+    # If you already created razorpay_order_id elsewhere, adjust accordingly.
+    client = razorpay.Client(auth=(settings.RAZORPAY_API_KEY, settings.RAZORPAY_API_SECRET))
+    razorpay_amount_paise = int((final_total_decimal * 100).to_integral_value())  # integer paise
 
-        if not fresh_variant.is_active:
-            messages.error(request, f"The product {variant.product.name} is currently unavailable! Please remove it.")
-            return redirect(view_cart)
+    # create razorpay order to get order_id
+    try:
+        razorpay_order = client.order.create({
+            "amount": razorpay_amount_paise,
+            "currency": "INR",
+            "payment_capture": 1
+        })
+        razorpay_order_id = razorpay_order.get('id')
+    except Exception:
+        razorpay_order_id = None
 
-        if fresh_variant.quantity == 0:
-            messages.error(request, f"The product {variant.product.name} is now out of stock! Please remove it.")
-            return redirect(view_cart)
+    try:
+        wallet = Wallet.objects.get(user=user)
+    except Wallet.DoesNotExist:
+        wallet = None    
 
-        if fresh_variant.quantity < cart.quantity:
-            messages.error(
-                request,
-                f"Only {fresh_variant.quantity} pieces left for {variant.product.name}. "
-                "Please update your cart."
-            )
-            return redirect(view_cart)
+    # save numeric values into session as floats (JSON-serializable)
+    request.session['subtotal'] = float(subtotal_decimal)
+    request.session['tax'] = float(tax_decimal)
+    request.session['delivery_charge'] = float(delivery_decimal)
+    request.session['total_before_discount'] = float(total_before_discount)
+    request.session['discount'] = float(discount_decimal)
+    request.session['final_total'] = float(final_total_decimal)
+    request.session.modified = True
 
-    if len(carts) == 0:
-        messages.error(request, 'Please add a product to cart to proceed.')
-        return redirect(view_cart)
-
-    coupon_code = request.session.get('coupon_code', 0)
-
-    total = subtotal + tax + 50
-    amount = int(total) * 100
-
-    c_date = date.today()
-    coupons = Coupon.objects.filter(expiry__gt=c_date, min_amount__lte=total, max_amount__gte=total)
-    coupon_usages = Coupon_usage.objects.filter(user=user)
-
-    for usage in coupon_usages:
-        coupons = coupons.exclude(code=usage.coupon.code)
-
-    request.session['subtotal'] = int(subtotal)
-    total = round(total, 2)
-
-    return render(request, 'check_out.html', {
+    context = {
         'user': user,
-        'addresses': addresses,
-        'subtotal': subtotal,
-        'tax': tax,
-        'total': total,
+        'addresses': Address.objects.filter(user=user),
         'carts': carts,
-        'amount': amount,
-        'coupons': coupons,
-    })
+        'subtotal': float(subtotal_decimal),
+        'tax': float(tax_decimal),
+        'delivery_charge': float(delivery_decimal),
+        'total_before_discount': float(total_before_discount),
+        'discount': float(discount_decimal),
+        'total': float(final_total_decimal),
+        'amount': razorpay_amount_paise,           # paise, integer
+        'razorpay_order_id': razorpay_order_id,
+        'RAZORPAY_API_KEY': settings.RAZORPAY_API_KEY,
+        # coupons available 
+        'coupons': Coupon.objects.filter(expiry__gt=date.today(), min_amount__lte=total_before_discount, max_amount__gte=total_before_discount),
+        'wallet':wallet
+    }
 
+    return render(request, 'check_out.html', context)
 
 def susses(request):
     return render(request,'susses.html')
@@ -472,134 +466,23 @@ def failed(request):
 
 
 
-# @csrf_exempt
-# def order(request):
-#     user = request.user
-#     c_id = request.session.get('carts', [])
-#     tax = request.session.get('tax', 0)
-    
-#     # Fetch the cart items
-#     carts = [Cart.objects.get(pk=id) for id in c_id]
-    
-    
-#     subtotal = request.session['subtotal']
-#     print(subtotal)
-#     total = subtotal + tax
-
-#     if request.method == 'POST':
-        
-#         state = request.POST.get('state')
-#         district = request.POST.get('district')
-#         city = request.POST.get('city')
-#         place = request.POST.get('place')
-#         pin = request.POST.get('pin')
-#         road = request.POST.get('road')
-#         house_name = request.POST.get('house_name')
-#         landmark = request.POST.get('landmark')
-#         name = request.POST.get('name')
-#         phone = request.POST.get('phone')
-#         pymd = request.POST.get('pymd') 
-#         pyst = request.POST.get('pyst')
-        
-#         save_address = request.POST.get('save_address')
-#         discount = 0
-
-        
-#         if save_address == 'yes':
-#             print ('hi')
-#             Address.objects.create(
-#                 state = state,
-#                 district = district,
-#                 city = city,
-#                 place = place, 
-#                 pin = pin,
-#                 road = road,
-#                 landmark = landmark,
-#                 house_name = house_name,
-#                 user = user
-#             )
-
-        
-        
-#         # Create the DeliveryAddress
-#         delivery_address = DeliveryAddress.objects.create(
-#             state=state,
-#             district=district,
-#             city=city,
-#             place=place,
-#             pin=pin,
-#             house_name=house_name,
-#             road=road,
-#             landmark=landmark,
-#             name=name,
-#             phone=phone,
-#         )
-        
-#         if pymd == 'wallet payment' :
-#             wallet = Wallet.objects.get(user=user)
-#             wallet.balence = float(wallet.balence) - float(total)
-#             wallet.save()
-#             pyst = 'done'
-#         # Create the Order
-#         order = Orders.objects.create(
-#             delivery_address=delivery_address,
-#             pyment_method=pymd,
-#             pyment_status=pyst,
-#             subtotal=subtotal,
-#             tax=tax,
-#             discount=discount,  
-#             total=total,
-#             user=user
-#         )
-        
-        
-#         if pymd == 'wallet payment' :
-#             transaction = Transactions.objects.create(order=order, wallet=wallet, type = 'debit', amount = total)
-        
-       
-#         # Create Order Items
-#         for cart in carts:
-#             Order_items.objects.create(
-#                 order=order,
-#                 variant=cart.variant,
-#                 unit_price=cart.unit_price,
-#                 price=cart.unit_price * cart.quantity,
-#                 quantity=cart.quantity,
-#                 status='Order placed',
-#                 user=user,
-#             )
-#             cart.variant.quantity = int(cart.variant.quantity) - int(cart.quantity)
-#             cart.variant.save()
-#         cart_items = Cart.objects.filter(user=request.user)
-#         cart_items.delete()
-#         del request.session['carts']
-        
-#         return JsonResponse({
-#             'status': 'success',
-#             # 'razorpay_order_id': razorpay_order_id,
-         
-#             'amount': total
-#         }, status=200)
-#     return JsonResponse({'status': 'failed'}, status=200)
-from django.db import transaction
-from django.http import JsonResponse
-from django.shortcuts import redirect
-from .models import Variants, Cart, Orders, Order_items, Wallet, Transactions, DeliveryAddress
-
-@csrf_exempt
+@require_POST
 def order(request):
     user = request.user
+    if not user.is_authenticated:
+        return JsonResponse({'status': 'unauthenticated'}, status=403)
+
+    # load session values floats stored
+    subtotal = Decimal(str(request.session.get('subtotal', 0)))
+    tax = Decimal(str(request.session.get('tax', 0)))
+    delivery_charge = Decimal(str(request.session.get('delivery_charge', 0)))
+    discount = Decimal(str(request.session.get('discount', 0)))
+    final_total = Decimal(str(request.session.get('final_total', subtotal + tax + delivery_charge)))
+
     c_id = request.session.get('carts', [])
-    tax = request.session.get('tax', 0)
-    subtotal = request.session.get('subtotal', 0)
-    total = subtotal + tax
+    carts = [Cart.objects.get(pk=i) for i in c_id] if c_id else []
 
-    carts = [Cart.objects.get(pk=id) for id in c_id]
-
-    if request.method != 'POST':
-        return JsonResponse({'status': 'failed', 'message': 'Invalid request'}, status=400)
-
-    # Collect address
+    # address fields
     state = request.POST.get('state')
     district = request.POST.get('district')
     city = request.POST.get('city')
@@ -610,96 +493,99 @@ def order(request):
     landmark = request.POST.get('landmark')
     name = request.POST.get('name')
     phone = request.POST.get('phone')
-    pymd = request.POST.get('pymd')
-    pyst = request.POST.get('pyst')
-    save_address = request.POST.get('save_address')
 
+    pymd = request.POST.get('pymd')  # payment method
+    pyst = request.POST.get('pyst', 'pending')  # payment status
+
+    save_address = request.POST.get('save_address', 'no')
     if save_address == 'yes':
         Address.objects.create(
-            state=state, district=district, city=city, place=place,
-            pin=pin, road=road, landmark=landmark, house_name=house_name,
-            user=user
+            user=user, state=state, district=district, city=city, place=place,
+            pin=pin, road=road, house_name=house_name, landmark=landmark
         )
 
-    # Save delivery address
     delivery_address = DeliveryAddress.objects.create(
         state=state, district=district, city=city, place=place, pin=pin,
-        house_name=house_name, road=road, landmark=landmark, name=name, phone=phone
+        road=road, house_name=house_name, landmark=landmark, name=name, phone=phone
     )
 
     try:
         with transaction.atomic():
-            # LOCK all variant rows for this transaction
-            locked_variants = []
+            # lock variants
+            locked = []
             for cart in carts:
                 variant = Variants.objects.select_for_update().get(id=cart.variant.id)
-                locked_variants.append((variant, cart))
+                locked.append((variant, cart))
 
-            # Check stock
-            for variant, cart in locked_variants:
-                if not variant.is_active or variant.quantity == 0:
-                    return JsonResponse({
-                        'status': 'failed',
-                        'message': f"{variant.product.name} is now OUT OF STOCK."
-                    })
-                if cart.quantity > variant.quantity:
-                    return JsonResponse({
-                        'status': 'failed',
-                        'message': f"Only {variant.quantity} left for {variant.product.name}."
-                    })
+            # stock checks
+            for variant, cart in locked:
+                if not variant.is_active or variant.quantity < cart.quantity:
+                    return JsonResponse({'status': 'failed', 'message': f'{variant.product.name} out of stock'})
 
-            # Wallet payment
+            # wallet payment handling
             if pymd == 'wallet payment':
                 wallet = Wallet.objects.select_for_update().get(user=user)
-                if wallet.balence < total:
+                if Decimal(str(wallet.balence)) < final_total:
                     return JsonResponse({'status': 'failed', 'message': 'Insufficient wallet balance'})
-                wallet.balence -= total
+                wallet.balence = float(Decimal(str(wallet.balence)) - final_total)
                 wallet.save()
                 pyst = 'done'
 
-            # Create Order
+            # create order object save decimal to float only in session model fields can be Decimal
             order = Orders.objects.create(
+                user=user,
                 delivery_address=delivery_address,
                 pyment_method=pymd,
                 pyment_status=pyst,
                 subtotal=subtotal,
                 tax=tax,
-                discount=0,
-                total=total,
-                user=user
+                discount=discount,
+                total=final_total
             )
 
+            # wallet transaction record
             if pymd == 'wallet payment':
-                Transactions.objects.create(order=order, wallet=wallet, type='debit', amount=total)
+                Transactions.objects.create(order=order, wallet=wallet, type='debit', amount=final_total)
 
-            # Create order items reduce stock
-            for variant, cart in locked_variants:
+            # create items and reduce stock
+            for variant, cart in locked:
                 Order_items.objects.create(
                     order=order,
-                    variant=cart.variant,
-                    unit_price=cart.unit_price,
-                    price=cart.unit_price * cart.quantity,
+                    variant=variant,
+                    unit_price=Decimal(str(cart.unit_price)),
+                    price=Decimal(str(cart.unit_price)) * Decimal(str(cart.quantity)),
                     quantity=cart.quantity,
                     status='Order placed',
                     user=user
                 )
-                variant.quantity -= cart.quantity
+                variant.quantity = variant.quantity - cart.quantity
                 variant.save()
 
-        # Clean cart after success
-        Cart.objects.filter(user=user).delete()
-        request.session.pop('carts', None)
+            # mark coupon usage if coupon applied
+            coupon_code = request.session.get('coupon_code', None)
+            if coupon_code:
+                try:
+                    coupon = Coupon.objects.get(code=coupon_code)
+                    Coupon_usage.objects.create(user=user, coupon=coupon)
+                except Coupon.DoesNotExist:
+                    pass
 
-        return JsonResponse({'status': 'success', 'amount': total}, status=200)
+            # clear cart and  session coupon keys
+            Cart.objects.filter(user=user).delete()
+            request.session.pop('carts', None)
+            for key in ['discount', 'coupon_code', 'final_total', 'total_before_discount']:
+                request.session.pop(key, None)
+            request.session.modified = True
+
+            return JsonResponse({'status': 'success', 'amount': float(final_total)})
 
     except Exception as e:
-        # If two users try same stock at the same time this ensures rollback
-        return JsonResponse({'status': 'failed', 'message': str(e)}, status=400)
+        return JsonResponse({'status': 'failed', 'message': str(e)})
 
 @never_cache
 def view_orders(request):
     if request.user.is_authenticated:
-        order_items = Order_items.objects.filter(user=request.user).order_by('-order__order_date')
+        order_items = Order_items.objects.filter(user=request.user).order_by('-id')
         return render(request,'orders.html',{'order_items':order_items})
     else:
         return redirect(signin)
@@ -739,9 +625,37 @@ def cancel_order(request,order_item_id):
 def return_order(request,order_item_id):
     create_wallet(request.user)
     order_item = Order_items.objects.get(pk=order_item_id)
-    order_item.status = 'Return pending'
-    order_item.save()
+    if order_item.order.pyment_status == 'done':
+        wallet = Wallet.objects.get(user=request.user)
+        amount = float(order_item.price) - float(order_item.order.discount)
+        transaction = Transactions.objects.create(order_item=order_item, wallet=wallet, variant = order_item.variant, amount = amount)
+        order_item.order.discount = 0
+        wallet.balence = float(wallet.balence)
+        wallet.balence += float(transaction.amount)
+        order_item.order.save()
+        wallet.save()
+    if request.method=="POST":
+        reason=request.POST.get("reson")
+        order_item.return_reson=reason
+        order_item.status = 'Return pending'
+        order_item.save()
     return redirect(view_orders)
+
+
+
+def retry_Payment(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        pyst = request.POST.get('pyst')
+        orders = Orders.objects.get(pk=order_id)
+        orders.pyment_status = pyst
+        orders.save()
+        return JsonResponse({
+            'status': 'success',
+            # 'razorpay_order_id': razorpay_order_id,
+            'razorpay_key': settings.RAZORPAY_API_KEY,
+            
+        }, status=200)
 
 
 def generate_invoice_pdf(request, order_item_id):
@@ -765,6 +679,18 @@ def generate_invoice_pdf(request, order_item_id):
         return HttpResponse('We had some errors <pre>' + html + '</pre>')
     return response
 
+
+
+
+
+def privacy_policy(request):
+    return render(request, "privacy_policy.html")
+
+def terms_conditions(request):
+    return render(request, "terms_conditions.html")
+
+def refund_policy(request):
+    return render(request, "refund_policy.html")
 
 
 

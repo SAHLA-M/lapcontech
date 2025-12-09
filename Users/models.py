@@ -84,10 +84,12 @@ class Order_items(models.Model):
     user = models.ForeignKey(Custom_User, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     status = models.CharField(max_length=50)
+    return_reason = models.TextField(null=True, blank=True)
     
 class Wallet(models.Model):
     user = models.ForeignKey(Custom_User, on_delete=models.CASCADE)
     balence = models.DecimalField(max_digits=10, decimal_places=2)
+    
     
 class Transactions(models.Model):
     order_item = models.ForeignKey(Order_items, on_delete=models.CASCADE,  null=True, blank=True)

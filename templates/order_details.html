@@ -59,14 +59,22 @@
         <img src="{{order_item.variant.image.url}}" style="width: 28%;">
         <div>
         <div class="invoice-header">
-            <h2>{{order_item.variant.product.name}}</h2>
+            <h3 class="fw-bold">{{order_item.variant.product.name}}</h3>
             <div>
                 {% if order_item.status != 'delivered' and order_item.status != 'cancelled' %}
                     <button type="button" class="btn btn-danger" id="cancel_order">cancel order</button>
                     {% endif %}
 
                     {% if order_item.status == 'delivered' %}
-                    <button type="button" class="btn btn-primary" id="return_order">Return</button>
+                     <form id="returnForm{{ order_item.id }}" method="POST" action="{% url 'return_order' order_item.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="reason" id="reasonInput{{ order_item.id }}">
+                            </form>
+
+                            <button class="btn btn-danger return-btn" data-id="{{ order_item.id }}">
+                                Return
+                            </button>
+                       
                     <a class="btn btn-secondary" href="{% url 'generate_invoice_pdf' order_item.id %}">Invoice</a>
                     {% endif %}
                 {% if order_item.order.pyment_status == 'pending' and order_item.order.pyment_method == 'Razorpay'%}
@@ -74,6 +82,7 @@
                 {% endif %}
                
             </div>
+            
         </div>
         <div class="invoice-details">
             <p><strong>Unit Price:</strong> ₹ {{order_item.unit_price}}</p>
@@ -93,6 +102,13 @@
         </div></div>
     </div>
 </div>
+<div class="text-center mt-4">
+    <a href="{% url 'home' %}" class="btn btn-primary" style="padding:10px 20px; border-radius:8px;">
+        Continue Shopping
+    </a>
+</div>
+
+
 <br><br><br><br><br>
 
 <!-- javascript -->
@@ -136,32 +152,81 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // RETURN ORDER
-  const returnBtn = document.getElementById('return_order');
-  if (returnBtn) {
-    returnBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-
-      Swal.fire({
-        title: 'Are you sure?',
-        text: 'Do you really want to return this product?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, request return!',
-        cancelButtonText: 'No, keep it',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = "{% url 'return_order' order_item.id %}";
-        }
-      });
-    });
-  }
+ 
 });
 </script>
+<script>
+  document.querySelectorAll(".return-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+        let id = this.dataset.id;
 
+        Swal.fire({
+            title: 'Return Reason',
+            input: 'textarea',
+            inputLabel: 'Why are you returning this item?',
+            inputPlaceholder: 'Write the reason...',
+            showCancelButton: true,
+            confirmButtonText: 'Submit',
+            cancelButtonText: 'Cancel',
+            preConfirm: (reason) => {
+                if (!reason) {
+                    Swal.showValidationMessage("Reason is required");
+                }
+                return reason;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Put the reason into hidden input
+                document.getElementById("reasonInput" + id).value = result.value;
+
+                // Submit the form normally (your redirect works)
+                document.getElementById("returnForm" + id).submit();
+            }
+        });
+    });
+});
+
+</script>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.getElementById('retry_Payment').onclick = function(e) {
+        e.preventDefault();
+
+        $.post("{% url 'retry_Payment' %}", {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        pyst: 'pending',
+        order_id: "{{ order_item.order.id }}"
+    }, function(data) {
+        
+        var options = {
+            "key": data.razorpay_key,
+            "order_id": data.razorpay_order_id,
+            "currency": "INR",
+            "name": "Lapcon",
+            "description": "Purchase Description",
+            "image": "{% static 'images/logolapcon.png' %}",
+            
+            "handler": function (response) {
+                 $.post("{% url 'retry_Payment' %}", {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    pyst: 'done',
+                    order_id: "{{ order_item.order.id }}"
+                }, function(res){
+                    window.location.href = "{% url 'susses' %}";
+                });
+
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.open();
+    });
+};
 
                 
+</script>
+          
 
 
 {% endblock %}

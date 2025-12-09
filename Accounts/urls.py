@@ -16,5 +16,6 @@ urlpatterns=[
     path('old_password/<int:user_id>', views.old_password,name='old_password'),
     path('admin_forgot_password', views.admin_forgot_password,name='admin_forgot_password'),
     path('Admin_verify', views.Admin_verify,name='Admin_verify'),
+    path('verify-referral-code/', views.verify_referral_code, name='verify_referral_code'),
 
 ]

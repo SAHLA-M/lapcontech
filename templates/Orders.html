@@ -2,107 +2,173 @@
 {% load static %}
 {% block title %}Orders{% endblock %}
 {% block contant %}
+
 <style>
-    .order-card {
-        border: 1px solid #ccc;
-        border-radius: 50px;
-        padding: 20px;
-        margin-bottom: 10px;
-    }
-    .status-tag {
-        padding: 5px;
-        border-radius: 5px;
-        color: #fff;
-    }
-    .delivered {
-        background-color: #28a745; /* Green */
-    }
-    .placed {
-        background-color: #007bff; /* Blue */
-    }
-    .cancelled {
-        background-color: #d7f113; /* Green */
-    }
-    .Out {
-        background-color: #d7f113; /* Green */
-    }
-    .Shipped {
-        background-color: #d7f113; /* Green */
-    }
-    .Dispatched {
-        background-color: #d7f113; /* Green */
-    }
-    .Preparing {
-        background-color: #d7f113; /* Green */
-    }
-    .returned {
-        background-color: #ff0022; /* Blue */
-    }
-    .Return  {
-        background-color: #ff0022; /* Blue */
-    }
-    .row{
-     justify-content: space-between;   
-    }
-    .col-md-8{
-        display: contents;
-    }
-    .col-md-8 img{
-        width: 50px;
-    }
+/* ------------ GENERAL PAGE STYLE ------------- */
+.order-section {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+.order-title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 30px;
+}
+
+/* ------------ ORDER CARD STYLING ------------- */
+.order-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 15px;
+    background: #fff;
+    transition: 0.3s;
+}
+.order-card:hover {
+    box-shadow: 0px 3px 10px rgba(0,0,0,0.1);
+    transform: scale(1.01);
+}
+.order-card img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+/* ------------ STATUS BADGES ------------- */
+.status-tag {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #fff;
+}
+.delivered { background: #28a745; }
+.placed { background: #007bff; }
+.cancelled { background: #ffcc00; color:#000; }
+.Out, .Shipped, .Dispatched, .Preparing { background: #ffcc00; color:#000; }
+.returned, .Return { background: #ff0033; }
+
+/* ------------ PAGINATION BUTTONS ------------- */
+.pagination-container {
+    text-align: center;
+    margin-top: 25px;
+}
+.page-btn {
+    padding: 8px 14px;
+    margin: 3px;
+    border-radius: 8px;
+    border: none;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+}
+.page-btn:hover {
+    background: #0056b3;
+}
+.page-btn.active {
+    background: #000;
+}
+
+/* ------------ RESPONSIVE ------------ */
+@media screen and (max-width: 768px) {
+    .order-card h5 { font-size: 16px; }
+    .order-card img { width: 60px; }
+}
 </style>
-<div class="small-container">
-    <div class="row row-2">
-        <h2>Orders</h2>
-        <!-- <select>
-            <option>Default Sort</option>
-            <option>Sort By Price</option>
-            <option>Sort By Popularity</option>
-            <option>Sort By Rating</option>
-            <option>Sort By Sale</option>
-        </select> -->
+
+
+<div class="order-section">
+
+    <h3 class="order-title ">MY ORDERS</h3>
+
+    <div class=" mb-4">
+        <a href="{% url 'home' %}" class="btn btn-primary" style="padding:10px 20px;border-radius:8px;">
+            Continue Shopping
+        </a>
     </div>
-</div>
-<br>
 
-<!-- Orderd items details -->
-
-<div class="container mt-5">
-    {% for order_item in order_items%}
+    <!-- ORDER LIST -->
+    <div id="order-list">
+        {% for o in order_items %}
         <div class="order-card">
-            <a href="{% url 'order_details' order_item.id %}">
-                <div class="row align-items-center justify-content-between">
-                    <div class="col-md-8 col-sm-6">
-                    <img src="{{order_item.variant.image.url}}" alt="">
-                        <h5>{{order_item.variant.product.name}}</h5>
-                        <p>Quantity: {{order_item.quantity}}</p>
-                    <p>Ordered at: {{order_item.order.order_date}}</p>
+            <a href="{% url 'order_details' o.id %}" style="text-decoration:none;color:inherit;">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div class="d-flex gap-3">
+                        <img src="{{o.variant.image.url}}" />
+                        <div>
+                            <h5>{{o.variant.product.name}}</h5>
+                            <p class="mb-1">Quantity: {{o.quantity}}</p>
+                            <small>Ordered at: {{o.order.order_date}}</small>
+                        </div>
                     </div>
-                    <div class="col-md-4 col-sm-6 text-right">
-                        {% if order_item.order.pyment_method == 'Razorpay' and order_item.order.pyment_status == 'pending' %}
-                            <span class="status-tag returned">Pyment failed</span>
-                        {%else%}
-                            <span class="status-tag {{order_item.status}}">{{order_item.status}}</span>
+
+                    <div>
+                        {% if o.order.pyment_method == 'Razorpay' and o.order.pyment_status == 'pending' %}
+                            <span class="status-tag returned">Payment Failed</span>
+                        {% else %}
+                            <span class="status-tag {{o.status}}">{{o.status}}</span>
                         {% endif %}
                     </div>
+
                 </div>
             </a>
         </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
+
+    <!-- PAGINATION BUTTONS -->
+    <div class="pagination-container" id="pagination"></div>
+
 </div>
-<br><br><br><br><br>
-<br><br><br><br><br>
-<br><br><br><br><br>
+
 <script>
-    var MenuItems = document.getElementById("MenuItems");
-    MenuItems.style.maxHeight = "0px";
-    function menutoggle() {
-        if (MenuItems.style.maxHeight == "0px") {
-            MenuItems.style.maxHeight = "200px"
-        }
-        else {
-            MenuItems.style.maxHeight = "0px"
-        }
+// =============================
+// AJAX PAGINATION (FRONT-END)
+// =============================
+
+let itemsPerPage = 5;  
+let orderCards = [];
+let totalPages = 1;
+
+function setupPagination() {
+    orderCards = Array.from(document.querySelectorAll(".order-card"));
+    totalPages = Math.ceil(orderCards.length / itemsPerPage);
+
+    renderPage(1);
+    renderPaginationButtons();
+}
+
+function renderPage(page) {
+    document.getElementById("order-list").innerHTML = "";
+
+    let start = (page - 1) * itemsPerPage;
+    let end = start + itemsPerPage;
+
+    orderCards.slice(start, end).forEach(item => {
+        document.getElementById("order-list").appendChild(item);
+    });
+
+    // Highlight Active Button
+    document.querySelectorAll(".page-btn").forEach(btn => btn.classList.remove("active"));
+    let activeBtn = document.getElementById(`page-${page}`);
+    if (activeBtn) activeBtn.classList.add("active");
+}
+
+function renderPaginationButtons() {
+    let paginationDiv = document.getElementById("pagination");
+    paginationDiv.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+        paginationDiv.innerHTML += `
+            <button class="page-btn" id="page-${i}" onclick="renderPage(${i})">${i}</button>
+        `;
     }
+}
+
+window.onload = setupPagination;
 </script>
+
 {% endblock %}

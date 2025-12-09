@@ -1,5 +1,5 @@
 #admin_palen/views.py
-from pyexpat.errors import messages
+from django.contrib import messages
 from django.shortcuts import render,redirect
 from Accounts.views import User
 from django.views.decorators.cache import never_cache
@@ -202,12 +202,13 @@ def add_brand_offer(request):
 def add_coupon(request):
         
     if request.method == 'POST':
+        code=request.POST['code']
         expiry = request.POST['date']
         percentage = request.POST['percentage']
         min_amount = request.POST['min_amount']
         max_amount = request.POST['max_amount']
         description = request.POST['description']
-        coupon = Coupon.objects.create(expiry=expiry, percentage=percentage, description=description, max_amount=max_amount, min_amount=min_amount)
+        coupon = Coupon.objects.create(code=code,expiry=expiry, percentage=percentage, description=description, max_amount=max_amount, min_amount=min_amount)
         messages.success(request,f'Coupon code {coupon.code} created')
     return render(request,'admin/add_coupon.html')
 
@@ -478,7 +479,7 @@ def sales_report(request):
         }
         return JsonResponse(data)
 
-    # Handle non-AJAX request (normal page rendering)
+    # Handle non-AJAX request normal page rendering
     if filter_type == 'daily':
         order_items = Order_items.objects.filter(order__order_date=date.today(), status = 'delivered')
     elif filter_type == 'weekly':
@@ -490,8 +491,9 @@ def sales_report(request):
     elif filter_type == 'yearly':
         order_items = Order_items.objects.filter(order__order_date__year=date.today().year, status = 'delivered')
 
-    coupon_usages = Coupon_usage.objects.all()
+    coupon_usages = Coupon_usage.objects.filter(order__isnull=False)
     coupon_usage_order_ides = [usage.order.id for usage in coupon_usages]
+
 
     context = {
         'order_items': order_items,
@@ -534,7 +536,7 @@ def download_pdf_report(request):
     # Create a BytesIO buffer to hold the PDF data
     buffer = BytesIO()
 
-    # Create a SimpleDocTemplate object to generate the PDF
+    # Create a simpledoctemplate object to generate the PDF
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     heading_style = ParagraphStyle(
     name="HeadingStyle",
@@ -599,7 +601,7 @@ def download_pdf_report(request):
 def download_excel_report(request):
     filter_type = request.GET.get('filter_type', 'daily')
     order_items = get_filtered_sales(filter_type)
-    # Logic to fetch filtered data
+    # logic to fetch filtered data
     order_items_list = list(order_items.values('order__order_date', 'id', 'order__delivery_address__name', 'status', 'price', 'unit_price', 'quantity'))
 
     df = pd.DataFrame(order_items_list)

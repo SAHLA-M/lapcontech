@@ -33,9 +33,15 @@ urlpatterns = [
     path('cancel_order/<int:order_item_id>/', views.cancel_order, name='cancel_order'),
     path('return_order/<int:order_item_id>/', views.return_order, name='return_order'),
     path('invoice/<int:order_item_id>/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
+    path('apply_coupon/', views.apply_coupon, name='apply_coupon'),
+    path('remove-coupon/', views.remove_coupon, name='remove_coupon'),
 
-
-     path('susses', views.susses, name='susses'),
+    path('susses', views.susses, name='susses'),
     path('failed', views.failed, name='failed'),
-
+    path('retry_Payment/', views.retry_Payment, name='retry_Payment'),
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    path('terms-conditions/', views.terms_conditions, name='terms_conditions'),
+    path('refund-policy/', views.refund_policy, name='refund_policy'),
+    
+    
 ]

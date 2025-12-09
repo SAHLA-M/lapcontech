@@ -1,6 +1,8 @@
 {% extends 'blank_layout.html' %}
 {% load static %}
+
 {% block title %}Wishlist{% endblock %}
+
 {% block contant %}
 
 <style>
@@ -11,6 +13,7 @@
             font-weight:900;
     }
 </style>
+  
 <div class="small-container">
     <div class="row row-2">
         <h2 class="text-center text-white fw-bold">Wishlist</h2>
@@ -26,7 +29,7 @@
     <div class="row " style="display: flex; flex-wrap: wrap;  flex-basis: 20%; ">
            
         {% for wishlist in wishlists%}
-            <div class="col-4 bg-white text-center " style =" flex-basis: 20%; ">
+            <div class="col-4 bg-white text-center wishlist-card " style =" flex-basis: 20%; ">
                 <a href="{% url 'variant_details' wishlist.variant.id %}">
                     <img  style="width: 250px; height: 250px;" src="{{wishlist.variant.image.url}}">
                     <h4>{{wishlist.variant.product.name}}</h4>
@@ -65,8 +68,13 @@
                     {% endif %}
                     <br>
                 <div class="wish_cart">
-                    <button class="cart add-to-cart-btn" data-variant-id="{{ wishlist.variant.id }}">Add to cart</button>
-                    <a href="{% url 'remove_from_wishlist' wishlist.id %}"><button class="wishlist">remove from wishlist</button></a>
+                        <button class="cart add-to-cart-btn" data-variant-id="{{ wishlist.variant.id }}">
+                            Add to cart
+                        </button>
+
+                        <a href="{% url 'remove_from_wishlist' wishlist.id %}">
+                            <button class="wishlist">Remove from wishlist</button>
+                        </a>
                 </div>
             </div>
         {% endfor %}
@@ -74,4 +82,6 @@
 
 <br><br><br><br><br><br><br>
 <br><br><br>
+
 {% endblock %}
+

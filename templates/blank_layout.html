@@ -58,7 +58,11 @@
                     <i class="bi-cart-fill me-1"></i>
                     Cart
                     <span class="badge bg-dark text-white ms-1 rounded-pill cart-items-count">
-                        {{ request.session.cart_data_obj|length }}
+                       {% if request.session.cart_data_obj %}
+                               {{ request.session.cart_data_obj|length }}
+                       {% else %}
+                                      0
+                       {% endif %}
                     </span>
                 </a>
             </form>
@@ -161,10 +165,10 @@
                     <!-- Legal -->
                     <div class="px-3 border-lg-end mb-3 mb-lg-0">
                         <h5>Legal</h5>
-                        <a href="#" class="text-reset text-decoration-none d-block link-hover">Privacy Policy</a>
-                        <a href="#" class="text-reset text-decoration-none d-block link-hover">Terms & Conditions</a>
-                        <a href="#" class="text-reset text-decoration-none d-block link-hover">Return Policy</a>
-                        <a href="#" class="text-reset text-decoration-none d-block link-hover">Shipping Policy</a>
+                        <a href="{% url 'privacy_policy' %}" class="text-reset text-decoration-none d-block link-hover">Privacy Policy</a>
+                        <a href="{% url 'terms_conditions' %}" class="text-reset text-decoration-none d-block link-hover">Terms & Conditions</a>
+                        <a href="{% url 'refund_policy' %}" class="text-reset text-decoration-none d-block link-hover">Return Policy</a>
+                        <a href="" class="text-reset text-decoration-none d-block link-hover">Shipping Policy</a>
                     </div>
                     <!-- Resources -->
                     <div class="px-3">
@@ -262,58 +266,80 @@
 
     
     <script>
-    $(document).ready(function() {
-        $('.add-to-cart-btn').click(function(e) {
-            e.preventDefault();
-            var variantId = $(this).data('variant-id');
-            
-            $.ajax({
-                url: "{% url 'add_to_cart' 0 %}".replace('0', variantId),
-                type: 'GET',
-                success: function(response) {
-                    if (response.status === 'added' || response.status === 'quantity_updated') {
-                        Toastify({
-                            text: "Item added to cart!",
-                            duration: 3000,
-                            close: true,
-                            gravity: "top",
-                            position: "right",
-                            backgroundColor: "#4CAF50",
-                            stopOnFocus: true,
-                        }).showToast();
-                    } else if (response.status === 'unauthenticated') {
-                        Toastify({
-                            text: "Please sign in to add items to your cart.!",
-                            duration: 3000,
-                            close: true,
-                            gravity: "top",
-                            position: "right",
-                            backgroundColor: "red",
-                            stopOnFocus: true,
-                        }).showToast();
-                    } else if (response.status === 'max') {
-                        Toastify({
-                            text: "The item rached max limit on your cart.",
-                            duration: 3000,
-                            close: true,
-                            gravity: "top",
-                            position: "right",
-                            backgroundColor: "yellow",
-                            stopOnFocus: true,
-                        }).showToast();
-                    }else if (response.status === 'error') {
-                        Toastify({
-                            text: "This product is out of stock!",
-                            duration: 3000,
-                            gravity: "top",
-                            position: "right",
-                            backgroundColor: "red",
-                        }).showToast();
-                    }
+    
+$(document).ready(function() {
 
+    $('.add-to-cart-btn').click(function(e) {
+        e.preventDefault();
+        
+
+        var cartBtn = $(this);            // ⭐ FIX: define button
+        var variantId = cartBtn.data('variant-id');
+
+        $.ajax({
+            url: "{% url 'add_to_cart' 0 %}".replace('0', variantId),
+            type: "GET",
+            success: function(response) {
+
+                if (response.status === "added" || response.status === "quantity_updated") {
+
+                    // ⭐ Remove wishlist item visually
+                    let wishlistCard = cartBtn.closest(".wishlist-card");
+                    wishlistCard.slideUp(300, function() {
+                        $(this).remove();
+                    });
+
+                    Toastify({
+                        text: "Item added to cart!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        close: true,
+                        backgroundColor: "#4CAF50",
+                    }).showToast();
                 }
-            });
+
+                else if (response.status === "max") {
+                    Toastify({
+                        text: "Maximum limit reached!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "yellow",
+                    }).showToast();
+                }
+
+                else if (response.status === "unauthenticated") {
+                    Toastify({
+                        text: "Please sign in to add items!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "red",
+                    }).showToast();
+                }
+
+                
+
+                else if (response.status === "error") {
+                    Toastify({
+                        text: "Out of stock!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "red",
+                    }).showToast();
+                }
+
+            }
         });
+
+    });
+
+
+
+ 
+
         
         $('.add-to-wishlist-btn').click(function(e) {
             e.preventDefault();
@@ -376,6 +402,11 @@
         offeredPrice.textContent = price
     });
    </script>
+<!-- Toastify CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+<!-- Toastify JS -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
     </body>
 </html>

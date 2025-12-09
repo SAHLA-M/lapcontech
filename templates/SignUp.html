@@ -142,6 +142,25 @@
       </div>
     </div>
     
+<script>
+    document.getElementById('referral_code').addEventListener('keyup', function() {
+        const referralCode = this.value;
+        if (referralCode.startsWith('PH') && referralCode.length === 10) {
+            fetch(`/verify-referral-code/?code=${referralCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        document.getElementById('referral_status').innerText = 'Valid Code';
+                        sessionStorage.setItem('valid_referral_code', referralCode);  // Store code in session
+                    } else {
+                        document.getElementById('referral_status').innerText = 'Invalid Code';
+                    }
+                });
+        } else {
+            document.getElementById('referral_status').innerText = 'Invalid Format';
+        }
+    });
+</script>
     <script>
         function validateForm() {
     const f_name = document.getElementById("f_name").value.trim();

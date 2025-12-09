@@ -1,4 +1,5 @@
 
+from django.http import JsonResponse
 from django.shortcuts import render,redirect
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
@@ -207,9 +208,25 @@ def otp_check(request):
                 last_name=l_name,
                 phone=phone
                 )
-                
-                user.save()
-                messages.success(request, 'Account created successfully! Please log in.')
+                if referral_code:
+                    referrer_profile = Profile.objects.get(referral_code=referral_code)
+                    referrer = referrer_profile.user
+
+                    # Add balance to referrer wallet
+                    referrer_wallet = Wallet.objects.get_or_create(user=referrer)
+                    referrer_wallet = Wallet.objects.get(user=referrer)
+                    referrer_wallet.balence += 550 
+                    referrer_wallet.save()
+                    print("re : ",referrer_wallet.user.username)
+                    # Add balance to new user wallet
+                    user_wallet  = Wallet.objects.get_or_create(user=user,balence=0)
+                    user_wallet  = Wallet.objects.get(user=user)
+                    user_wallet.balence += 1000
+                    user_wallet.save()
+                    # Clear the referral code from session
+                    del request.session['valid_referral_code']
+                    user.save()
+                    messages.success(request, 'Account created successfully! Please log in.')
 
 
             if flow_type == 'change_email':
@@ -476,7 +493,12 @@ def old_password(request, user_id):
         
     return render(request,'old_password.html') 
 
-
+def verify_referral_code(request):
+    referral_code = request.GET.get('code')
+    if Profile.objects.filter(referral_code=referral_code).exists():
+        request.session['valid_referral_code'] = referral_code
+        return JsonResponse({'valid': True})
+    return JsonResponse({'valid': False})
 
 
 

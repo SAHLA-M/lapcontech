@@ -89,6 +89,18 @@
         </table>
     </div>
 </div>
+
+{% for transaction in transactions %}
+<tr>
+    <td>₹ {{ transaction.amount }}</td>
+    <td>{{ transaction.narration }}</td>
+    <td>{{ transaction.created_at }}</td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="3">No transactions yet.</td>
+</tr>
+{% endfor %}
 <br><br><br><br><br>
 
 
